@@ -1,0 +1,9 @@
+# Builds the presentation next to this directory, as
+# ../01-os-introduction__presentation.pdf, and keeps every intermediate file
+# in build/. Run `latexmk` from here.
+@default_files = ('01-os-introduction__presentation.tex');
+$pdf_mode = 1;
+$aux_dir = 'build';
+$out_dir = '..';
+# Stop at the first error instead of waiting for input that never comes.
+set_tex_cmds('-interaction=nonstopmode -halt-on-error -file-line-error %O %S');

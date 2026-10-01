@@ -1,0 +1,2 @@
+# latexmk's intermediate files; the presentation itself is built to ../
+/build/
