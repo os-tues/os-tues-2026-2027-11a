@@ -47,64 +47,6 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Изисквания}
-  \begin{itemize}
-    \item \emph{Писане} - за всеки блок на случаен принцип избираме
-      \emph{писар}, който да състави подробни и ясни записки за съответното
-      занятие. Ще предоставя шаблон, в който да вместите Вашите бележки.
-    \item \emph{„Малки“ контролни} - върху всяка точка от сбития конспект;
-      провеждани в час за не повече от 40 минути. Ще предупреждавам минимум две
-      седмици преди всяко контролно, но очакваните дати са за средите на
-      октомври, ноември и декември.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Изисквания}
-  \begin{itemize}
-    \item \emph{„Големи“ контролни} - върху няколко точки от сбития конспект.
-      След Коледа.
-    \item \emph{Домашни} - скромни и с упражнителна цел; писане на код. След
-      проверка на домашни ще се провеждат устни защити с част от предалите. Не
-      мамете.
-    \item \emph{Проект} - по-нескромна задача за писане на код. Приветстват се
-      собствени теми, но те трябва да бъдат предварително одобрени.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Материали}
-  \urlstyle{same}
-  \begin{itemize}
-    \item Считайте презентациите, които ще осигурявам за основен източник.
-    \item Другото най-полезно четиво са записките, направени от Вас.
-    \item Книги (неизчерпателен списък) -
-      \begin{itemize}
-        \item Operating Systems: Three Easy Pieces -
-          \url{https://pages.cs.wisc.edu/~remzi/OSTEP/}
-        \item xv6 - \url{https://pdos.csail.mit.edu/6.828/2018/xv6/book-rev10.pdf}
-        \item Modern Operating Systems, Tanenbaum
-        \item The Design of the UNIX Operating System, Bach
-        \item The C Programming Language, Ritchie
-        \item Advanced Programming in the UNIX Environment, Stevens
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Материали}
-  \begin{itemize}
-    \item[] \begin{itemize}
-        \item Expert C Programming: Deep C Secrets, Linden
-      \end{itemize}
-    \item Справочници (неизчерпателен списък) -
-      \begin{itemize}
-        \item \texttt{man} страниците - или командата, или
-          \url{https://www.man7.org/linux/man-pages}
-        \item Документацията на Intel -
-          \url{https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html}
-        \item и други, които ще Ви посочвам, когато ще са полезни.
-      \end{itemize}
-  \end{itemize}
-\end{frame}
-
 \section{Преговор}
 
 \begin{frame}{Бройни системи}
@@ -178,6 +120,44 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Десетични представки}
+  Представките в системата SI умножават мерната единица по степен на 10 -
+  например $1\,\text{km} = 10^3\,\text{m}$, а $1\,\text{ms} = 10^{-3}\,\text{s}$.
+  \medskip
+
+  \noindent
+  \begin{columns}[T]
+    \begin{column}{0.45\textwidth}
+      \centering
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        \textbf{Представка} & \textbf{Множител} \\
+        \midrule
+        кило (k) & $10^{3}$ \\
+        мега (M) & $10^{6}$ \\
+        гига (G) & $10^{9}$ \\
+        тера (T) & $10^{12}$ \\
+        пета (P) & $10^{15}$ \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      \centering
+      \begin{tabular}{@{}lr@{}}
+        \toprule
+        \textbf{Представка} & \textbf{Множител} \\
+        \midrule
+        мили (m) & $10^{-3}$ \\
+        микро (\textmu) & $10^{-6}$ \\
+        нано (n) & $10^{-9}$ \\
+        пико (p) & $10^{-12}$ \\
+        фемто (f) & $10^{-15}$ \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+  \end{columns}
+\end{frame}
+
 \begin{frame}{Няколко важни константи}
   \emph{Уговорка.} За нас един килобайт е 1024 байта. Аналогично имаме
   \[
@@ -212,7 +192,7 @@
   множество от побитова карта, в размер.
 \end{frame}
 
-\begin{frame}{Индианци}
+\begin{frame}{Индианци и яйца (Endianness)}
   \begin{itemize}
     \item \emph{Пример.} Нека имаме целочислено число, съставено от четири
       байта (\texttt{uint32\_t}). В паметта то се представя чрез поредица от
@@ -225,14 +205,14 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Индианци}
+\begin{frame}{Индианци и яйца (Endianness)}
   \begin{figure}
     \includegraphics[height=0.55\textheight]{endianness}
     \caption{Илюстрация на endianness при 4-байтово число.}
   \end{figure}
 \end{frame}
 
-\begin{frame}{Индианци}
+\begin{frame}{Индианци и яйца (Endianness)}
   \begin{itemize}
     \item Когато байтовете на данните са разположени отдясно-наляво, казваме,
       че се използва big endian. Обратно, ако са отляво-надясно - little
