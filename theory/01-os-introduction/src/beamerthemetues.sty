@@ -127,8 +127,41 @@
 % A link shown by name rather than by its address.
 \newcommand{\weblink}[2]{\href{#1}{\textcolor{tueslink}{#2}}}
 
+% --- Segmented builds -------------------------------------------------------
+%
+% A segmented build reveals a slide a step at a time: list items one by one,
+% each exercise answer after its question, and whatever follows a \seg after
+% everything before it. Any other build shows every slide whole. A build is
+% segmented when \segmentedbuild is defined before the document class loads.
+
+\newif\ifsegmented
+\ifdefined\segmentedbuild \segmentedtrue \fi
+
+% Lists reveal their items one by one unless they say otherwise, e.g.
+% \begin{itemize}[<1->]. This is set on the lists themselves rather than with
+% \beamerdefaultoverlayspecification, which would also turn every column of a
+% columns environment into a step of its own.
+\ifsegmented
+  \let\tues@itemize\itemize
+  \renewcommand{\itemize}{\@ifnextchar[{\tues@itemize}{\tues@itemize[<+->]}}
+  \let\tues@enumerate\enumerate
+  \renewcommand{\enumerate}{\@ifnextchar[{\tues@enumerate}{\tues@enumerate[<+->]}}
+\fi
+
+% A step boundary in a segmented build; nothing otherwise. It counts steps the
+% way <+-> does, so that it can follow list items and answers without leaving
+% an empty step behind (\pause would). Before the first step of a frame, the
+% content so far is step 1 and what follows becomes step 2.
+\newcommand{\seg}{%
+  \ifsegmented
+    \ifnum\value{beamerpauses}=1 \setcounter{beamerpauses}{2}\fi
+    \onslide<+->%
+  \fi}
+
 % An exercise answer: small type-writer text pushed to the right margin, on
 % the item's last line when it fits there and on a line of its own otherwise.
+\newcommand{\tues@answerbox}[1]{\mbox{\tiny\ttfamily Отг. #1}}
 \newcommand{\answer}[1]{%
   \unskip\nobreak\hfill\penalty50\hskip1em\null\nobreak\hfill
-  \mbox{\tiny\ttfamily Отг. #1}\parfillskip=0pt\par}
+  \ifsegmented\uncover<+->{\tues@answerbox{#1}}\else\tues@answerbox{#1}\fi
+  \parfillskip=0pt\par}

@@ -75,15 +75,16 @@
   \underline{Какво е бройна система?}
   \bigskip
 
+  \seg
   \begin{tabular}{@{}p{0.6\textwidth}l@{}}
     $14_{(10)} = 1 \cdot 10^1 + 4 \cdot 10^0$
-      & $\implies 14_{(10)}$ \\[0.3em]
+      & $\implies 14_{(10)}$ \\[0.3em] \seg
     $14_{(10)} = 1 \cdot 2^3 + 1 \cdot 2^2 + 1 \cdot 2^1 + 0 \cdot 2^0$
-      & $\implies 1110_{(2)}$ \\[0.3em]
+      & $\implies 1110_{(2)}$ \\[0.3em] \seg
     $14_{(10)} = 1 \cdot 3^2 + 1 \cdot 3^1 + 2 \cdot 3^0$
-      & $\implies 112_{(3)}$ \\[0.3em]
+      & $\implies 112_{(3)}$ \\[0.3em] \seg
     $14_{(10)} = 1 \cdot 8^1 + 6 \cdot 8^0$
-      & $\implies 16_{(8)}$ \\[0.3em]
+      & $\implies 16_{(8)}$ \\[0.3em] \seg
     $14_{(10)} = 14 \cdot 16^0$
       & $\implies 14_{(16)} \equiv E_{(16)}$
   \end{tabular}
@@ -123,6 +124,7 @@
       половин байт - т.е. четири бита. Най-голямата шестнайсетична цифра е
       \texttt{f}.
   \end{itemize}
+  \seg
   \[
     \begin{aligned}
       \texttt{f}_{(16)} &= 1111_{(2)} \\
@@ -147,6 +149,7 @@
   например $1\,\text{km} = 10^3\,\text{m}$, а $1\,\text{ms} = 10^{-3}\,\text{s}$.
   \medskip
 
+  \seg
   \noindent
   \begin{columns}[T]
     \begin{column}{0.45\textwidth}
@@ -164,6 +167,7 @@
       \end{tabular}
     \end{column}
     \begin{column}{0.45\textwidth}
+      \seg
       \centering
       \begin{tabular}{@{}lr@{}}
         \toprule
@@ -182,6 +186,7 @@
 
 \begin{frame}{Няколко важни константи}
   \emph{Уговорка.} За нас един килобайт е 1024 байта. Аналогично имаме
+  \seg
   \[
     \begin{aligned}
       1\,\text{KB} &= 1024\,\text{B} \\
@@ -197,6 +202,7 @@
   \textbf{Няма} да се придържаме към системата SI, която определя един
   килобайт като 1000 байта, а 1024 байта нарича кибибайт. Важните константи
   са:
+  \seg
   \[
     \begin{aligned}
       1\,\text{KB} &= 2^{10}\,\text{B} \\
@@ -408,7 +414,7 @@
         5 = \texttt{0000\,0101} \;\longrightarrow\; \texttt{1111\,1010}
         \;\longrightarrow\; \texttt{1111\,1011} = -5
       \]
-    \item Събирането работи без промяна - преносът навън се изхвърля:
+    \item Събирането работи без промяна, преносът се изхвърля:
       \[
         \texttt{0000\,0101} + \texttt{1111\,1011} = \texttt{(1)\,0000\,0000} = 0
       \]
@@ -474,12 +480,13 @@
       \toprule
       \multicolumn{2}{@{}l}{\textbf{Пресмятане}} & \textbf{Бит} \\
       \midrule
-      $0.625$ & $1.25$ & 1 \\
-      $0.25$ & $0.5$ & 0 \\
-      $0.5$ & $1.0$ & 1 \\
+      \seg $0.625$ & $1.25$ & 1 \\
+      \seg $0.25$ & $0.5$ & 0 \\
+      \seg $0.5$ & $1.0$ & 1 \\
       \bottomrule
     \end{tabular}
     \qquad
+    \seg
     $\implies 0.625 = 0.101_{(2)}$
   \end{center}
   \begin{itemize}
@@ -496,17 +503,18 @@
         \toprule
         \multicolumn{2}{@{}l}{\textbf{Пресмятане}} & \textbf{Бит} \\
         \midrule
-        $0.1$ & $0.2$ & 0 \\
-        $0.2$ & $0.4$ & 0 \\
-        $0.4$ & $0.8$ & 0 \\
-        $0.8$ & $1.6$ & 1 \\
-        $0.6$ & $1.2$ & 1 \\
-        $0.2$ & $0.4$ & 0 \\
+        \seg $0.1$ & $0.2$ & 0 \\
+        \seg $0.2$ & $0.4$ & 0 \\
+        \seg $0.4$ & $0.8$ & 0 \\
+        \seg $0.8$ & $1.6$ & 1 \\
+        \seg $0.6$ & $1.2$ & 1 \\
+        \seg $0.2$ & $0.4$ & 0 \\
         \multicolumn{3}{c}{\dots} \\
         \bottomrule
       \end{tabular}
     \end{column}
     \begin{column}{0.6\textwidth}
+      \seg
       \[
         0.1 = 0.0\overline{0011}_{(2)}
       \]
@@ -542,6 +550,7 @@
   \begin{center}
     \floatbits{{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}}
   \end{center}
+  \seg
   \[
     \text{стойност} = (-1)^{S} \cdot 1.F_{(2)} \cdot 2^{E - 127}
   \]
@@ -563,10 +572,12 @@
     \item Дробна част: битовете след запетаята, \texttt{0111}, допълнени с нули
       до 23 бита.
   \end{enumerate}
+  \seg
   \begin{center}
     \floatbits{0,1,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
 
     \smallskip
+    \seg
     $= \texttt{0x40B80000}$
   \end{center}
 \end{frame}
@@ -576,10 +587,12 @@
     \item $0.1 = 1.1001\,1001\,1001\dots_{(2)} \cdot 2^{-4}$ - дробната част е
       безкрайна, затова след 23-тия бит закръгляме.
   \end{itemize}
+  \seg
   \begin{center}
     \floatbits{0,0,1,1,1,1,0,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,1}
 
     \smallskip
+    \seg
     $= \texttt{0x3DCCCCCD}$
   \end{center}
   \begin{itemize}
@@ -625,6 +638,7 @@
       8859-5 и други.
     \item Един и същ байт е различна буква в различните таблици:
   \end{itemize}
+  \seg
   \begin{center}
     \small
     \begin{tabular}{@{}lll@{}}
@@ -947,7 +961,7 @@
 
 \begin{frame}{За четене вкъщи}
   \footnotesize
-  \begin{itemize}
+  \begin{itemize}[<1->]
     \item \textcolor{tuesnavy}{Remzi H. Arpaci-Dusseau и Andrea C. Arpaci-Dusseau}.
       \emph{Introduction to Operating Systems}.
       {\color{bibnote}\url{https://pages.cs.wisc.edu/~remzi/OSTEP/intro.pdf}.

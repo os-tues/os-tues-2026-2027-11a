@@ -1,7 +1,10 @@
-# Builds ../01-os-introduction__presentation.pdf. latexmkrc holds the details;
-# this is the short way to run it.
+# Builds both variants of the presentation: ../01-os-introduction__presentation.pdf
+# shows every slide whole, and ../01-os-introduction__presentation-segmented.pdf
+# reveals them step by step. latexmkrc holds the details; this is the short way
+# to run it.
 
-PDF := ../01-os-introduction__presentation.pdf
+PDFS := ../01-os-introduction__presentation.pdf \
+        ../01-os-introduction__presentation-segmented.pdf
 
 .PHONY: all watch clean distclean
 
@@ -17,6 +20,6 @@ clean:
 	latexmk -c
 	rm -rf build
 
-# Remove the presentation too.
+# Remove the presentations too.
 distclean: clean
-	rm -f $(PDF)
+	rm -f $(PDFS)
