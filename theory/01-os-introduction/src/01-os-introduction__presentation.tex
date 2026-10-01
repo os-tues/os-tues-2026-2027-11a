@@ -11,6 +11,28 @@
 
 \definecolor{bibnote}{HTML}{627293}
 
+\usepackage{tikz}
+
+% The 32 bits of an IEEE 754 float, coloured by field, with a value (or
+% nothing) in each cell: \floatbits{0,1,0,...}.
+\colorlet{signbits}{orange!40}
+\colorlet{exponentbits}{cyan!30}
+\colorlet{fractionbits}{violet!20}
+\newcommand{\floatbits}[1]{%
+  \begin{tikzpicture}[x=0.4cm, y=0.55cm]
+    \foreach \bit [count=\i from 0] in {#1} {
+      \ifnum\i=0 \def\fieldcolor{signbits}%
+      \else\ifnum\i<9 \def\fieldcolor{exponentbits}%
+      \else\def\fieldcolor{fractionbits}\fi\fi
+      \filldraw[fill=\fieldcolor, draw=white] (\i,0) rectangle ++(1,1);
+      \node[font=\scriptsize\ttfamily] at (\i+0.5,0.5) {\bit};
+    }
+    \node[below, font=\scriptsize] at (0.5,0) {$S$};
+    \node[below, font=\scriptsize] at (5,0) {експонента $E$ (8)};
+    \node[below, font=\scriptsize] at (20.5,0) {дробна част $F$ (23)};
+  \end{tikzpicture}%
+}
+
 \title{Въведение}
 \subtitle{Операционни системи}
 \author{Ангел Пенчев}
@@ -243,6 +265,403 @@
       използва little- или big-endian за 4-байтово целочислено число.
       \emph{Подсказка.} В \texttt{gdb} използвайте команда \texttt{x/4b \&a},
       където \texttt{a} е вашата променлива.
+  \end{itemize}
+\end{frame}
+
+\section{Защо двоична бройна система?}
+
+\begin{frame}{Защо двоична бройна система?}
+  \begin{itemize}
+    \item Не винаги е било така. Машините на Бабидж (XIX в.), Harvard Mark I
+      (1944) и ENIAC (1945) смятат в \emph{десетична} система - за всяка цифра
+      има колело или брояч с 10 положения.
+    \item По същото време Z3 на Конрад Цузе (1941) и ABC на Джон Атанасов и
+      Клифърд Бери (1942) смятат в \emph{двоична}.\footnote{Бащата на Джон
+        Атанасов, Иван Атанасов, е българин от село Бояджик.}
+    \item След доклада на фон Нойман за EDVAC (1945) почти всички компютри са
+      двоични. \emph{Защо?}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Защо точно две състояния?}
+  \begin{columns}[c]
+    \begin{column}{0.66\textwidth}
+      \begin{itemize}
+        \item Сигналът е напрежение - непрекъсната величина, върху която
+          винаги има шум.
+        \item При 2 нива всяка стойност има широк интервал и шумът трудно ги
+          обърква. При 10 нива интервалите са много по-тесни.
+        \item Транзисторът не е „двоичен“ - в цифровите схеми го използваме
+          като ключ, напълно отворен или затворен.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.3\textwidth}
+      \centering
+      \begin{tikzpicture}[x=1cm, y=0.85cm, font=\scriptsize]
+        \draw[->] (-0.3,0) -- (-0.3,4.3) node[above] {$U$};
+        \fill[tuesblue!25] (0,0) rectangle (1,1.4);
+        \fill[gray!15] (0,1.4) rectangle (1,2.6);
+        \fill[tuesblue!25] (0,2.6) rectangle (1,4);
+        \node at (0.5,0.7) {\normalsize 0};
+        \node at (0.5,3.3) {\normalsize 1};
+        \draw (0,0) rectangle (1,4);
+        \foreach \i in {0,...,9} {
+          \fill[tuesblue!25] (1.6,{\i*0.4+0.06}) rectangle (2.6,{\i*0.4+0.34});
+          \node[font=\tiny] at (2.1,{\i*0.4+0.2}) {\i};
+        }
+        \draw (1.6,0) rectangle (2.6,4);
+        \node[below] at (0.5,0) {2 нива};
+        \node[below] at (2.1,0) {10 нива};
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Двоичната логика е проста}
+  \begin{itemize}
+    \item Две състояния са истина и лъжа - аритметиката се свежда до булева
+      алгебра (Шанън, 1937), а И, ИЛИ и НЕ се изграждат от няколко транзистора.
+    \item Всичко, което обработваме - числа, текст, изображения, звук,
+      програми - може да се запише като поредица от битове.
+    \item Не е догма. Сетун (МГУ, 1958) е троичен компютър, флаш паметите
+      MLC/TLC/QLC пазят по 2-4 бита в клетка (4-16 нива на заряд), а PCIe 6.0
+      предава по 2 бита наведнъж (PAM4, 4 нива). Там допълнителните грешки се
+      поемат от кодове за корекция.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Цели числа без знак}
+  \begin{itemize}
+    \item С $N$ бита записваме $2^N$ различни стойности. Без знак (unsigned)
+      това са числата от $0$ до $2^N - 1$.
+  \end{itemize}
+  \begin{center}
+    \small
+    \begin{tabular}{@{}rl@{}}
+      \toprule
+      \textbf{Бита} & \textbf{Обхват} \\
+      \midrule
+      8 & от 0 до 255 \\
+      16 & от 0 до 65\,535 \\
+      32 & от 0 до 4\,294\,967\,295 \\
+      64 & от 0 до $\approx 1.8 \cdot 10^{19}$ \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Броят битове е фиксиран. Пренос, който не се побира, се губи -
+      смятаме по модул $2^N$. В 8 бита $255 + 1 = 0$, като километраж на кола.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Цели числа в C}
+  \begin{center}
+    \small
+    \begin{tabular}{@{}lrrr@{}}
+      \toprule
+      \textbf{Тип} & \textbf{Минимум по стандарт} & \textbf{Linux x86-64}
+        & \textbf{Windows x64} \\
+      \midrule
+      \texttt{char} & 8 бита & 8 & 8 \\
+      \texttt{short} & 16 бита & 16 & 16 \\
+      \texttt{int} & 16 бита & 32 & 32 \\
+      \texttt{long} & 32 бита & 64 & 32 \\
+      \texttt{long long} & 64 бита & 64 & 64 \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Стандартът гарантира само минимални размери, реалните зависят от
+      платформата - проверете със \texttt{sizeof}.
+    \item Когато размерът е важен, използвайте типовете от
+      \texttt{<stdint.h>}: \texttt{int8\_t}, \texttt{uint16\_t},
+      \texttt{int32\_t}, \texttt{uint64\_t} и т.н.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Отрицателни числа - първи опит}
+  \begin{itemize}
+    \item Най-простата идея: най-старшият бит е знак, а останалите - големина
+      (на англ. sign and magnitude).
+      \[
+        +5 = \texttt{0000\,0101} \qquad -5 = \texttt{1000\,0101}
+      \]
+    \item Два проблема:
+      \begin{itemize}
+        \item две нули - \texttt{0000\,0000} ($+0$) и \texttt{1000\,0000} ($-0$);
+        \item обикновеното събиране вече не работи:
+          $\texttt{0000\,0101} + \texttt{1000\,0101} = \texttt{1000\,1010} = -10$,
+          а не $0$.
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Допълнителен код}
+  \begin{itemize}
+    \item В допълнителен код (на англ. two's complement) най-старшият бит
+      получава \emph{отрицателно} тегло $-2^{N-1}$:
+      \[
+        \texttt{1111\,1011} = -128 + 64 + 32 + 16 + 8 + 2 + 1 = -5
+      \]
+    \item Смяна на знака: обръщаме всички битове и добавяме 1.
+      \[
+        5 = \texttt{0000\,0101} \;\longrightarrow\; \texttt{1111\,1010}
+        \;\longrightarrow\; \texttt{1111\,1011} = -5
+      \]
+    \item Събирането работи без промяна - преносът навън се изхвърля:
+      \[
+        \texttt{0000\,0101} + \texttt{1111\,1011} = \texttt{(1)\,0000\,0000} = 0
+      \]
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Допълнителен код}
+  \begin{itemize}
+    \item Има само една нула, а една и съща схема събира числа със и без знак.
+    \item Обхватът е от $-2^{N-1}$ до $2^{N-1} - 1$ - за 8 бита от $-128$ до
+      $127$.
+    \item Старшият бит все още показва знака (1 значи отрицателно), но не е
+      „просто знак“ - $-1$ е \texttt{1111\,1111}, а не \texttt{1000\,0001}.
+    \item Затова \texttt{(unsigned char)-1 == 255}: битовете са същите, само
+      ги четем по различен начин.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Цели числа в C - особености}
+  \begin{itemize}
+    \item От C23 стандартът изисква допълнителен код. Преди е допускал и други
+      представяния, но на практика всички платформи използват него.
+    \item Аритметиката без знак е по модул $2^N$, а препълване при числа със
+      знак е \emph{недефинирано поведение} - компилаторът приема, че не се
+      случва.
+    \item Дали \texttt{char} е със знак, зависи от платформата: на x86
+      обикновено е, на ARM Linux - не. Когато е важно, пишете \texttt{signed
+        char} или \texttt{unsigned char}.
+    \item Двоичните литерали (\texttt{0b1010}) са в стандарта от C23, а дотогава
+      са разширение на GCC и Clang.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Дроби - позиции след запетаята}
+  \begin{itemize}
+    \item Позиционният запис продължава и надясно от запетаята - с
+      отрицателни степени на основата:
+      \[
+        \begin{aligned}
+          0.625_{(10)} &= 6 \cdot 10^{-1} + 2 \cdot 10^{-2} + 5 \cdot 10^{-3} \\
+          0.101_{(2)} &= 1 \cdot 2^{-1} + 0 \cdot 2^{-2} + 1 \cdot 2^{-3}
+            = 0.5 + 0.125 = 0.625
+        \end{aligned}
+      \]
+    \item Всяка позиция надясно е два пъти по-малка от предишната:
+      \[
+        2^{-1} = 0.5 \qquad 2^{-2} = 0.25 \qquad 2^{-3} = 0.125
+        \qquad 2^{-4} = 0.0625
+      \]
+    \item Пример: $5.75 = 4 + 1 + 0.5 + 0.25 = 101.11_{(2)}$
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Дроби - от десетична към двоична}
+  \begin{itemize}
+    \item Умножаваме дробната част по 2. Цялата част на резултата е следващият
+      бит, а с дробната продължаваме.
+    \item \emph{Защо?} Умножението по 2 мести двоичната запетая с една
+      позиция надясно - първият бит след нея „излиза“ пред нея.
+  \end{itemize}
+  \begin{center}
+    \begin{tabular}{@{}r@{${}\times 2 = {}$}l@{\qquad}c@{}}
+      \toprule
+      \multicolumn{2}{@{}l}{\textbf{Пресмятане}} & \textbf{Бит} \\
+      \midrule
+      $0.625$ & $1.25$ & 1 \\
+      $0.25$ & $0.5$ & 0 \\
+      $0.5$ & $1.0$ & 1 \\
+      \bottomrule
+    \end{tabular}
+    \qquad
+    $\implies 0.625 = 0.101_{(2)}$
+  \end{center}
+  \begin{itemize}
+    \item Спираме, когато дробната част стане 0.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Безкрайни двоични дроби}
+  \begin{columns}[c]
+    \begin{column}{0.36\textwidth}
+      \centering
+      \small
+      \begin{tabular}{@{}r@{${}\times 2 = {}$}lc@{}}
+        \toprule
+        \multicolumn{2}{@{}l}{\textbf{Пресмятане}} & \textbf{Бит} \\
+        \midrule
+        $0.1$ & $0.2$ & 0 \\
+        $0.2$ & $0.4$ & 0 \\
+        $0.4$ & $0.8$ & 0 \\
+        $0.8$ & $1.6$ & 1 \\
+        $0.6$ & $1.2$ & 1 \\
+        $0.2$ & $0.4$ & 0 \\
+        \multicolumn{3}{c}{\dots} \\
+        \bottomrule
+      \end{tabular}
+    \end{column}
+    \begin{column}{0.6\textwidth}
+      \[
+        0.1 = 0.0\overline{0011}_{(2)}
+      \]
+      \begin{itemize}
+        \item Повтаря се безкрайно - също като $\frac{1}{3} = 0.333\dots$
+        \item Краен двоичен запис има само дроб със знаменател степен на 2:
+          $\frac{1}{2}, \frac{3}{4}, \frac{5}{8}$ - да; $\frac{1}{10},
+          \frac{1}{3}$ - не.
+        \item Компютърът не може да запише 0.1 точно - пази приближение.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Къде да сложим запетаята?}
+  \begin{itemize}
+    \item \emph{Фиксирана запетая} - например 16 бита за цялата част и 16 за
+      дробната. Просто е, но обхватът е малък: от $\approx 0.000015$ до
+      $\approx 65\,536$.
+    \item Във физиката имат същия проблем и го решават с научен запис:
+      $6.022 \cdot 10^{23}$, $1.6 \cdot 10^{-19}$. Значещите цифри и порядъкът се
+      пазят поотделно.
+    \item \emph{Плаваща запетая} - научен запис, но с основа 2:
+      \[
+        5.75 = 101.11_{(2)} = 1.0111_{(2)} \cdot 2^{2}
+      \]
+    \item Нормализираното число винаги започва с 1, затова тази единица не се
+      записва (неявен бит).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{IEEE 754 - float (32 бита)}
+  \begin{center}
+    \floatbits{{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{},{}}
+  \end{center}
+  \[
+    \text{стойност} = (-1)^{S} \cdot 1.F_{(2)} \cdot 2^{E - 127}
+  \]
+  \begin{itemize}
+    \item $E$ се пази без знак. Отместването 127 позволява отрицателни степени:
+      $E = 127$ означава $2^0$, $E = 1$ означава $2^{-126}$.
+    \item $E = 0$ и $E = 255$ са запазени - за нулата, много малки
+      (денормализирани) числа, $\pm\infty$ и NaN.
+    \item \texttt{double} (64 бита): 1 + 11 + 52 бита, отместване 1023.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Пример - 5.75 като float}
+  \begin{enumerate}
+    \item Двоично: $5.75 = 101.11_{(2)}$
+    \item Нормализираме: $1.0111_{(2)} \cdot 2^{2}$
+    \item Знак: $S = 0$, защото числото е положително.
+    \item Експонента: $E = 2 + 127 = 129 = \texttt{1000\,0001}_{(2)}$
+    \item Дробна част: битовете след запетаята, \texttt{0111}, допълнени с нули
+      до 23 бита.
+  \end{enumerate}
+  \begin{center}
+    \floatbits{0,1,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+
+    \smallskip
+    $= \texttt{0x40B80000}$
+  \end{center}
+\end{frame}
+
+\begin{frame}{А 0.1?}
+  \begin{itemize}
+    \item $0.1 = 1.1001\,1001\,1001\dots_{(2)} \cdot 2^{-4}$ - дробната част е
+      безкрайна, затова след 23-тия бит закръгляме.
+  \end{itemize}
+  \begin{center}
+    \floatbits{0,0,1,1,1,1,0,1,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,1}
+
+    \smallskip
+    $= \texttt{0x3DCCCCCD}$
+  \end{center}
+  \begin{itemize}
+    \item Записаното число е $0.100000001490116119384765625$ - близо до $0.1$,
+      но не $0.1$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Дроби - какво следва от това}
+  \begin{itemize}
+    \item В \texttt{double} $0.1 + 0.2 == 0.3$ е лъжа - сумата е
+      $0.30000000000000004$. Пробвайте в любимия си език!
+    \item \texttt{float} пази около 7 значещи десетични цифри, \texttt{double} -
+      около 15-16.
+    \item Не сравнявайте дроби с \texttt{==}. Проверявайте дали разликата е
+      достатъчно малка: \texttt{fabs(a - b) < 1e-9}.
+    \item Не пазете пари във \texttt{float} - пазете цели стотинки в
+      целочислен тип.
+    \item Специални стойности: $1.0 / 0.0 = +\infty$, $0.0 / 0.0 =$ NaN, и NaN
+      не е равно дори на себе си.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Символи - ASCII}
+  \begin{itemize}
+    \item Компютърът не знае какво е буква. Всеки символ е число, а таблица
+      определя кое число коя буква е.
+    \item ASCII (1963): 7 бита, 128 символа - латински букви, цифри,
+      препинателни знаци и управляващи символи (например \texttt{'\textbackslash
+        n'} е 10).
+    \item В C \texttt{char} е просто малко цяло число:
+      \texttt{'A' == 65 == 0b1000001}, \texttt{'a' == 97 == 0b1100001}.
+    \item Таблицата е подредена нарочно: малката и главната буква се различават
+      в един бит (\texttt{'a' - 'A' == 32}), а стойността на цифра получаваме с
+      \texttt{c - '0'}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Символи - кодови таблици}
+  \begin{itemize}
+    \item ASCII използва 7 от 8-те бита. Останалите 128 стойности всеки
+      използва за своите букви - само за кирилица има CP1251, KOI8-R, ISO
+      8859-5 и други.
+    \item Един и същ байт е различна буква в различните таблици:
+  \end{itemize}
+  \begin{center}
+    \small
+    \begin{tabular}{@{}lll@{}}
+      \toprule
+      \textbf{Байт} & \textbf{Таблица} & \textbf{Символ} \\
+      \midrule
+      \texttt{0xC0} & CP1251 & А \\
+      \texttt{0xC0} & KOI8-R & ю \\
+      \texttt{0xC0} & ISO 8859-5 & Р \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Текст, прочетен с грешната таблица, става безсмислица
+      („кракозябри“, на англ. mojibake).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Символи - Unicode и UTF-8}
+  \begin{itemize}
+    \item Unicode дава на всеки символ от всички писмености уникален номер (code
+      point) от U+0000 до U+10FFFF - над 1,1 милиона възможни, от които над
+      150\,000 вече са заети.
+    \item В началото (1991) Unicode е 16-битов, но 65\,536 символа се оказват
+      малко и през 1996 г. е разширен.
+    \item UTF-8 записва всеки номер с 1 до 4 байта, а ASCII символите остават
+      същите единични байтове:
+      \begin{center}
+        \small
+        \begin{tabular}{@{}lll@{}}
+          A & U+0041 & \texttt{41} \\
+          А (кирилско) & U+0410 & \texttt{D0 90} \\
+          емоджи „усмихнато лице“ & U+1F600 & \texttt{F0 9F 98 80} \\
+        \end{tabular}
+      \end{center}
+    \item В C \texttt{strlen("Ж") == 2} - \texttt{strlen} брои байтове, не
+      символи.
   \end{itemize}
 \end{frame}
 
@@ -537,6 +956,10 @@
       \emph{Mechanism: Limited Direct Execution}.
       {\color{bibnote}\url{https://pages.cs.wisc.edu/~remzi/OSTEP/cpu-mechanisms.pdf}.
         Chapter from Operating Systems: Three Easy Pieces, Version 1.10. 2018}
+    \item \textcolor{tuesnavy}{Computerphile}. \emph{Why Use Binary?}
+      {\color{bibnote}\url{https://youtu.be/thrx3SBEpL8}. Video, YouTube}
+    \item \textcolor{tuesnavy}{Computerphile}. \emph{Floating Point Numbers}.
+      {\color{bibnote}\url{https://youtu.be/PZRI1IfStY0}. Video, YouTube}
     \item \textcolor{tuesnavy}{David Drysdale}. \emph{Anatomy of a system call, part 1}.
       {\color{bibnote}\url{https://lwn.net/Articles/604287/}. Article from
         LWN.net. 2014}
