@@ -619,10 +619,59 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Въпрос}
+  \centering
+  \vfill
+  {\Large\texttt{0.1 + 0.2 == 0.3}}
+
+  \bigskip
+  Вярно ли е?
+  \vfill
+\end{frame}
+
+\begin{frame}[fragile]{0.1 + 0.2 != 0.3}
+  \noindent В който и да е език за програмиране сумата в \texttt{double} е
+  $0.30000000000000004$.
+  \medskip
+
+  \begin{columns}[T]
+    \begin{column}{0.46\textwidth}
+      \small\textbf{C}
+\begin{semiverbatim}\scriptsize
+double s = 0.1 + 0.2;
+printf("%d\\n", s == 0.3);
+// 0
+\end{semiverbatim}
+      \seg
+      \small\textbf{JavaScript}
+\begin{semiverbatim}\scriptsize
+> 0.1 + 0.2 === 0.3
+false
+\end{semiverbatim}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \seg
+      \small\textbf{x86-64 (NASM)}
+\begin{semiverbatim}\scriptsize
+a:  dq 0.1
+b:  dq 0.2
+c:  dq 0.3
+
+movsd   xmm0, [a]  ; 0.1
+addsd   xmm0, [b]  ; + 0.2
+ucomisd xmm0, [c]  ; == 0.3?
+sete    al         ; al = 0
+\end{semiverbatim}
+    \end{column}
+  \end{columns}
+  \seg
+  \medskip
+  \noindent\small Сумата е \texttt{0x3FD3333333333334}, а $0.3$ е
+  \texttt{0x3FD3333333333333} - разликата е в последния бит.
+\end{frame}
+
 \begin{frame}{Дроби - какво следва от това}
   \begin{itemize}
-    \item В \texttt{double} $0.1 + 0.2 == 0.3$ е лъжа - сумата е
-      $0.30000000000000004$. Пробвайте в любимия си език!
     \item \texttt{float} пази около 7 значещи десетични цифри, \texttt{double} -
       около 15-16.
     \item Не сравнявайте дроби с \texttt{==}. Проверявайте дали разликата е
