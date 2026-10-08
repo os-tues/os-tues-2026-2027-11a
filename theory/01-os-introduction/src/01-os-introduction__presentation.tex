@@ -800,6 +800,117 @@ sete    al         ; al = 0
   \end{itemize}
 \end{frame}
 
+\begin{frame}{Процесорът отвътре}
+  \begin{center}
+    \begin{tikzpicture}[
+        x=1cm, y=0.95cm, font=\footnotesize,
+        unit/.style={draw=tuesnavy, fill=tuesblue!12, rounded corners=2pt,
+          align=center, minimum height=0.85cm, inner sep=2pt},
+        cache/.style={unit, fill=tuesblue!25},
+        link/.style={<->, >=stealth, thick, tuesnavy}]
+      \draw[tuesnavy, rounded corners=4pt] (0,-1.5) rectangle (11,5);
+      \node[anchor=north west, font=\scriptsize\bfseries, text=tuesnavy]
+        at (0.1,5) {Процесор (CPU)};
+      \draw[gray, dashed, rounded corners=3pt] (0.3,0.15) rectangle (7.7,4.5);
+      \node[anchor=north west, font=\scriptsize, text=gray!80!black]
+        at (0.35,4.5) {Ядро};
+      \node[unit, minimum width=2.8cm] (cu) at (1.95,3.35)
+        {Извличане и\\декодиране};
+      \node[unit, minimum width=1.4cm] (alu) at (4.35,3.35) {ALU};
+      \node[unit, minimum width=2cm] (reg) at (6.45,3.35) {Регистри};
+      \node[cache, minimum width=2.8cm] (l1i) at (1.95,2.05)
+        {L1 кеш\\за инструкции};
+      \node[cache, minimum width=3cm] (l1d) at (5.95,2.05) {L1 кеш\\за данни};
+      \node[cache, minimum width=6.8cm] (l2) at (4,0.8) {L2 кеш};
+      \draw[gray, dashed, rounded corners=3pt] (8,0.15) rectangle (10.7,4.5);
+      \node[align=center, font=\scriptsize, text=gray!80!black] at (9.35,2.3)
+        {Други ядра\\със свои\\L1 и L2};
+      \node[cache, minimum width=10.4cm] (l3) at (5.5,-0.75)
+        {L3 кеш - общ за всички ядра};
+      \node[unit, minimum width=1.6cm] (ram) at (12.6,-0.75) {RAM};
+      \draw[link] (cu) -- (alu);
+      \draw[link] (alu) -- (reg);
+      \draw[link] (cu) -- (l1i);
+      \draw[link] (reg.south) -- (reg.south |- l1d.north);
+      \draw[link] (l1i.south) -- (l1i.south |- l2.north);
+      \draw[link] (l1d.south) -- (l1d.south |- l2.north);
+      \draw[link] (l2.south) -- (l2.south |- l3.north);
+      \draw[link] (9.35,0.15) -- (9.35,0.15 |- l3.north);
+      \draw[link] (l3) -- (ram);
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}{Части на процесора}
+  \begin{itemize}
+    \item \textbf{Управляващото устройство} извлича следващата инструкция,
+      декодира я и казва на останалите части какво да правят.
+    \item \textbf{Аритметико-логическото устройство (ALU)} смята: събиране,
+      изваждане, сравнение, AND, OR, XOR, NOT. Изградено е от логически
+      елементи, а те - от транзистори.
+    \item \textbf{Регистрите} са най-бързата памет - няколко десетки клетки в
+      самия процесор, по 64 бита на x86-64.
+    \item \textbf{Кешът} пази копие на последно използваните данни от RAM, за
+      да не се чака паметта всеки път.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Регистри с общо предназначение}
+  \begin{itemize}
+    \item Достъпни са за всяка програма - за променливи, междинни резултати
+      и адреси.
+    \item x86-64 има 16 такива: \texttt{rax}, \texttt{rbx}, \texttt{rcx},
+      \texttt{rdx}, \texttt{rsi}, \texttt{rdi}, \texttt{rsp}, \texttt{rbp} и
+      \texttt{r8}-\texttt{r15}. ARM64 има 31: \texttt{x0}-\texttt{x30}.
+    \item Отделно има регистри за дроби - \texttt{xmm0} от примера с
+      $0.1 + 0.2$ е такъв.
+    \item Някои архитектури ги делят на регистри за данни и за адреси
+      (Motorola 68000), x86-64 и ARM64 - не.
+  \end{itemize}
+\begin{semiverbatim}\small
+    mov rax, 42      ; rax = 42
+    add rax, rbx     ; rax = rax + rbx
+\end{semiverbatim}
+\end{frame}
+
+\begin{frame}{Регистри за управление}
+  \begin{itemize}
+    \item \textbf{Програмен брояч} (PC; \texttt{rip}) - адресът на следващата
+      инструкция.
+    \item \textbf{Регистър на инструкцията} (IR) - текущата инструкция.
+      Програмите не го виждат.
+    \item \textbf{Регистър на състоянието} (PSW; \texttt{rflags} на x86-64) -
+      резултатът от последното сравнение (нула, знак, пренос, препълване),
+      дали прекъсванията са разрешени и режимът на
+      процесора.\footnote{На x86-64 режимът е в младшите два бита на
+        \texttt{cs}.}
+    \item Програмата ги променя само косвено - с преходи и сравнения, а
+      прекъсванията и режима - само ядрото.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Кеш памет}
+  \begin{center}
+    \small
+    \begin{tabular}{@{}lllr@{}}
+      \toprule
+      & \textbf{Типичен обем} & \textbf{Къде е} & \textbf{Време за достъп} \\
+      \midrule
+      \seg Регистри & стотици байта & в ядрото & $< 0.3$ ns \\
+      \seg L1 & 32-64 KB & на ядро & $\approx 1$ ns \\
+      \seg L2 & 0.5-3 MB & на ядро & $\approx 3$ ns \\
+      \seg L3 & 8-64 MB & общ за ядрата & $\approx 10$ ns \\
+      \seg RAM & 8-64 GB & извън процесора & $\approx 100$ ns \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Колкото по-далеч от ALU, толкова по-голям и по-бавен: L1 < L2 < L3
+      по обем, L1 > L2 > L3 по скорост.
+    \item L1 е разделен на две - за инструкции (L1I) и за данни (L1D).
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Шина и входно-изходни устройства}
   \begin{itemize}
     \item \textbf{Шината} пренася данни между компонентите: по едни линии -
