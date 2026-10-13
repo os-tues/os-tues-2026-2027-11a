@@ -1,0 +1,167 @@
+% Beamer theme for the TUES operating systems lectures.
+%
+% Plain white slides: a navy frame title over a thin rule, black bullets, and
+% the slide number in the bottom right corner. The title slide is a full-bleed
+% picture with the title block set in white on its right half; set the picture
+% with \titlebackground{<file>} before \maketitle.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemetues}[2026/10/01 TUES operating systems lectures]
+
+\RequirePackage{booktabs}
+\RequirePackage{array}
+\RequirePackage{tabularx}
+% Table cells are set ragged right and centred vertically in their row.
+\renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash}m{#1}}
+
+\definecolor{tuesnavy}{HTML}{0D2659}
+\definecolor{tuesblue}{HTML}{0066AB}
+\definecolor{tueslink}{HTML}{646464}
+
+% --- Colours ----------------------------------------------------------------
+
+\setbeamercolor{normal text}{fg=black, bg=white}
+\setbeamercolor{structure}{fg=tuesnavy}
+\setbeamercolor{frametitle}{fg=tuesnavy}
+\setbeamercolor{title}{fg=white}
+\setbeamercolor{subtitle}{fg=white}
+\setbeamercolor{author}{fg=white}
+\setbeamercolor{institute}{fg=white}
+\setbeamercolor{date}{fg=white}
+\setbeamercolor{itemize item}{fg=black}
+\setbeamercolor{itemize subitem}{fg=black}
+\setbeamercolor{section in toc}{fg=tuesnavy}
+\setbeamercolor{subsection in toc}{fg=black}
+\setbeamercolor{footnote mark}{fg=black}
+\setbeamercolor{page number in head/foot}{fg=black}
+
+% Plain URLs take the colour of the text around them; named links are grey.
+\hypersetup{colorlinks=true, linkcolor=., urlcolor=.}
+
+% --- Fonts ------------------------------------------------------------------
+
+\setbeamerfont{frametitle}{series=\bfseries}
+\setbeamerfont{title}{size=\LARGE, series=\bfseries}
+\setbeamerfont{subtitle}{size=\normalsize, series=\bfseries}
+\setbeamerfont{author}{size=\large}
+\setbeamerfont{institute}{size=\scriptsize}
+\setbeamerfont{date}{size=\scriptsize}
+\setbeamerfont{section in toc}{size=\large, series=\bfseries}
+\setbeamerfont{subsection in toc}{size=\small}
+\setbeamerfont{page number in head/foot}{size=\tiny}
+\setbeamerfont{caption}{size=\footnotesize}
+\setbeamerfont{footnote}{size=\footnotesize}
+
+% --- Templates --------------------------------------------------------------
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\textbullet}
+\setbeamertemplate{itemize subitem}{\footnotesize\textbullet}
+\setbeamertemplate{enumerate item}{\insertenumlabel.}
+\setbeamertemplate{caption}[default]
+\setbeamertemplate{frametitle continuation}{}
+
+% The title sits in from the text margin, over a rule that runs to the right
+% margin a fixed distance below the title's descenders.
+\setbeamertemplate{frametitle}{%
+  \vspace*{0.3cm}%
+  \noindent\hspace*{0.7cm}{\usebeamercolor[fg]{frametitle}\usebeamerfont{frametitle}%
+    \insertframetitle\par}%
+  \nointerlineskip\vspace{5pt}%
+  \noindent\hspace*{0.7cm}{\usebeamercolor[fg]{frametitle}%
+    \rule{\dimexpr\textwidth-0.7cm\relax}{0.4pt}}\par
+}
+
+\setbeamertemplate{footline}{%
+  \hfill{\usebeamercolor[fg]{page number in head/foot}%
+    \usebeamerfont{page number in head/foot}%
+    \insertframenumber\,/\,\inserttotalframenumber}%
+  \hspace*{0.35cm}\vspace*{0.3cm}%
+}
+
+\setbeamertemplate{title page}{%
+  \vspace*{1.2cm}%
+  \begin{flushright}
+    {\usebeamercolor[fg]{title}\usebeamerfont{title}\inserttitle\par}
+    \vspace{0.35cm}
+    {\usebeamercolor[fg]{subtitle}\usebeamerfont{subtitle}\insertsubtitle\par}
+    \vspace{1cm}
+    {\usebeamercolor[fg]{author}\usebeamerfont{author}\insertauthor\par}
+    {\usebeamercolor[fg]{institute}\usebeamerfont{institute}\insertinstitute\par}
+    \vspace{0.7cm}
+    {\usebeamercolor[fg]{date}\usebeamerfont{date}\insertdate\par}
+  \end{flushright}
+  \vfill
+}
+
+\setbeamertemplate{section in toc}{%
+  \vspace{0.9em}%
+  \hspace*{0.7cm}{\usebeamercolor[fg]{section in toc}\usebeamerfont{section in toc}%
+    \inserttocsectionnumber.~\inserttocsection\par}%
+}
+\setbeamertemplate{subsection in toc}{%
+  \leavevmode\hspace*{1cm}%
+  {\usebeamercolor[fg]{subsection in toc}\usebeamerfont{subsection in toc}%
+    \inserttocsectionnumber.\inserttocsubsectionnumber\quad
+    \inserttocsubsection\par}%
+}
+
+% Paragraphs in running text are indented, as in a book.
+\AtBeginDocument{\setlength{\parindent}{1.5em}}
+
+% --- Helpers ----------------------------------------------------------------
+
+% The title slide's full-bleed picture.
+\newcommand{\titlebackground}[1]{\def\tues@titlebackground{#1}}
+\def\tues@titlebackground{}
+
+% \maketitle with the picture behind it and no slide number.
+\renewcommand{\maketitle}{%
+  {\usebackgroundtemplate{%
+      \includegraphics[width=\paperwidth, height=\paperheight]{\tues@titlebackground}}%
+    \begin{frame}[plain]
+      \titlepage
+    \end{frame}}%
+}
+
+% A link shown by name rather than by its address.
+\newcommand{\weblink}[2]{\href{#1}{\textcolor{tueslink}{#2}}}
+
+% --- Segmented builds -------------------------------------------------------
+%
+% A segmented build reveals a slide a step at a time: list items one by one,
+% each exercise answer after its question, and whatever follows a \seg after
+% everything before it. Any other build shows every slide whole. A build is
+% segmented when \segmentedbuild is defined before the document class loads.
+
+\newif\ifsegmented
+\ifdefined\segmentedbuild \segmentedtrue \fi
+
+% Lists reveal their items one by one unless they say otherwise, e.g.
+% \begin{itemize}[<1->]. This is set on the lists themselves rather than with
+% \beamerdefaultoverlayspecification, which would also turn every column of a
+% columns environment into a step of its own.
+\ifsegmented
+  \let\tues@itemize\itemize
+  \renewcommand{\itemize}{\@ifnextchar[{\tues@itemize}{\tues@itemize[<+->]}}
+  \let\tues@enumerate\enumerate
+  \renewcommand{\enumerate}{\@ifnextchar[{\tues@enumerate}{\tues@enumerate[<+->]}}
+\fi
+
+% A step boundary in a segmented build; nothing otherwise. It counts steps the
+% way <+-> does, so that it can follow list items and answers without leaving
+% an empty step behind (\pause would). Before the first step of a frame, the
+% content so far is step 1 and what follows becomes step 2.
+\newcommand{\seg}{%
+  \ifsegmented
+    \ifnum\value{beamerpauses}=1 \setcounter{beamerpauses}{2}\fi
+    \onslide<+->%
+  \fi}
+
+% An exercise answer: small type-writer text pushed to the right margin, on
+% the item's last line when it fits there and on a line of its own otherwise.
+\newcommand{\tues@answerbox}[1]{\mbox{\tiny\ttfamily Отг. #1}}
+\newcommand{\answer}[1]{%
+  \unskip\nobreak\hfill\penalty50\hskip1em\null\nobreak\hfill
+  \ifsegmented\uncover<+->{\tues@answerbox{#1}}\else\tues@answerbox{#1}\fi
+  \parfillskip=0pt\par}

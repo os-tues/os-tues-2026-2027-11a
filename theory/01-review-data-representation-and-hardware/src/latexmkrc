@@ -1,0 +1,14 @@
+# Builds both variants of the presentation next to this directory, and keeps
+# every intermediate file in build/. Run `latexmk` (or `make`) from here.
+#
+#   ../01-review-data-representation-and-hardware__presentation.pdf
+#       every slide whole
+#   ../01-review-data-representation-and-hardware__presentation-segmented.pdf
+#       revealed step by step
+@default_files = ('01-review-data-representation-and-hardware__presentation.tex',
+                  '01-review-data-representation-and-hardware__presentation-segmented.tex');
+$pdf_mode = 1;
+$aux_dir = 'build';
+$out_dir = '..';
+# Stop at the first error instead of waiting for input that never comes.
+set_tex_cmds('-interaction=nonstopmode -halt-on-error -file-line-error %O %S');

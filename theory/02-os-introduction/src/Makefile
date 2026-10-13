@@ -1,10 +1,10 @@
-# Builds both variants of the presentation: ../01-os-introduction__presentation.pdf
-# shows every slide whole, and ../01-os-introduction__presentation-segmented.pdf
+# Builds both variants of the presentation: ../02-os-introduction__presentation.pdf
+# shows every slide whole, and ../02-os-introduction__presentation-segmented.pdf
 # reveals them step by step. latexmkrc holds the details; this is the short way
 # to run it.
 
-PDFS := ../01-os-introduction__presentation.pdf \
-        ../01-os-introduction__presentation-segmented.pdf
+PDFS := ../02-os-introduction__presentation.pdf \
+        ../02-os-introduction__presentation-segmented.pdf
 
 .PHONY: all watch clean distclean
 

@@ -3,7 +3,8 @@
 
 # Un-ignore thought lectures directories
 !/00-course-structure
-!/01-os-introduction
+!/01-review-data-representation-and-hardware
+!/02-os-introduction
 
 # Un-ignore this .gitignore file
 !/.gitignore
