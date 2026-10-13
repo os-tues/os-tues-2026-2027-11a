@@ -34,6 +34,74 @@
     \uncover<+->{#1}%
   \else #1\fi}
 
+% The toy processor of Crash Course Computer Science #7, with its English
+% names, in parts so that a slide can build it up one part at a time: RAM with
+% the program, the registers on the data bus, the instruction and instruction
+% address registers, the control unit around them, and the ALU. Its cells are
+% named - ram0 to ram7, regA to regD, iro, ira and iar - for the slides that
+% draw over them.
+\tikzset{
+  cpu cell/.style={draw=tuesnavy, fill=white, minimum height=0.38cm,
+    inner sep=1pt, font=\tiny\ttfamily},
+  cpu label/.style={font=\tiny, text=gray!80!black},
+  cpu step/.style={circle, inner sep=0.6pt, font=\tiny\bfseries, text=white},
+}
+\newcommand{\cpuram}{%
+  \node[font=\scriptsize\bfseries, text=tuesnavy] at (11.95,3.1) {RAM};
+  \node[cpu label] at (11.25,2.57) {address};
+  \node[cpu label] at (12.325,2.57) {data};
+  \foreach \addr/\data [count=\k from 0] in
+      {0/0010 1110, 1/0001 1111, 2/1000 0100, 3/0100 1101, 4-12/0000 0000,
+       13/0000 0000, 14/0000 0011, 15/0000 1110} {
+    \node[cpu cell, minimum width=0.7cm] at (11.25,2.15-\k*0.38) {\addr};
+    \node[cpu cell, minimum width=1.45cm] (ram\k) at (12.325,2.15-\k*0.38)
+      {\data};
+  }
+  \draw[tuesnavy, thick] (10.75,2.8) rectangle (13.15,-0.85);}
+\newcommand{\cpuregisters}{%
+  \draw (3.35,3.3) -- (9.85,3.3) |- (10.75,2.0);
+  \node[cpu label, anchor=south east] at (10.7,2.0) {data};
+  \foreach \r/\x in {A/3.35, B/4.95, C/6.55, D/8.15} {
+    \node[cpu cell, minimum width=1.5cm] (reg\r) at (\x,2.3)
+      {\textsf{\textbf{\r}}\; 0000 0000};
+    \draw (reg\r.north) -- (\x,3.3);
+    \fill (\x,3.3) circle (1pt);
+  }}
+\newcommand{\cpuir}{%
+  \node[cpu label] at (6.9,1.25) {instruction register};
+  \node[cpu cell, minimum width=0.9cm] (iro) at (6.45,0.85) {0000};
+  \node[cpu cell, minimum width=0.9cm] (ira) at (7.35,0.85) {0000};
+  \node[cpu label] at (6.45,0.47) {opcode};
+  \node[cpu cell, minimum width=1.8cm] (iar) at (6.9,-0.55) {0000 0000};
+  \node[cpu label] at (6.9,-0.95) {instruction address register};
+  \draw (9.5,3.3) -- (9.5,0.85) -- (ira.east);
+  \fill (9.5,3.3) circle (1pt);
+  \draw (ira.south) |- (8.55,0.3);
+  \draw (iar.east) -| (8.55,0.3) -- (10.75,0.3);
+  \node[cpu label, anchor=south east] at (10.7,0.3) {address};}
+\newcommand{\cpucu}{%
+  \draw[tuesnavy, thick, rounded corners=2pt] (2.6,-1.75) rectangle (8.9,1.6);
+  \node[anchor=north west, font=\scriptsize\bfseries, text=tuesnavy]
+    at (2.7,1.55) {control unit};
+  \foreach \x in {3.35, 4.95, 6.55, 8.15} \draw (\x,2.11) -- (\x,1.6);
+  \draw (8.9,-0.2) -- (10.75,-0.2);
+  \node[cpu label, anchor=south east] at (10.7,-0.2) {read enable};
+  \draw (8.9,-0.6) -- (10.75,-0.6);
+  \node[cpu label, anchor=south east] at (10.7,-0.6) {write enable};}
+\newcommand{\cpualu}{%
+  \draw[fill=tuesblue!12, draw=tuesnavy] (-0.1,0.7) -- (1.7,0.7) -- (1.25,-0.9)
+    -- (0.35,-0.9) -- cycle;
+  \node[font=\scriptsize\bfseries, text=tuesnavy] at (0.8,-0.3) {ALU};
+  \draw (2.6,1.25) -| (0.3,0.7);
+  \draw (2.6,1.0) -| (1.3,0.7);
+  \draw (2.6,0.1) -- (1.53,0.1) node[cpu label, midway, above] {opcode};
+  \draw (1.39,-0.4) -- (2.8,-0.4);
+  \foreach \f [count=\k from 0] in {O, Z, N}
+    \node[cpu cell, minimum width=0.3cm] at (2.95+\k*0.3,-0.4) {\f};
+  \node[cpu label] at (3.25,-0.05) {flags};
+  \draw (0.8,-0.9) -- (0.8,-2.1) -| (4.2,-1.75);
+  \node[cpu label, anchor=west] at (0.85,-1.55) {output};}
+
 % The 32 bits of an IEEE 754 float, coloured by field, with a value (or
 % nothing) in each cell: \floatbits{0,1,0,...}.
 \colorlet{signbits}{orange!40}
@@ -978,26 +1046,30 @@ sete    al         ; al = 0
 \end{frame}
 
 % From transistor to gate. A transistor is a switch between its output and a
-% constant voltage: nMOS closes on a 1 at its input, pMOS on a 0. CMOS NOT and
-% NAND are drawn with their transistors, each next to its gate symbol.
-\begin{frame}{Логическите елементи отвътре}
+% constant voltage: nMOS closes on a 1 at its input, pMOS on a 0. The
+% transistors come first, then which terminal is which, then how they switch.
+% CMOS NOT and NAND are drawn with their transistors, each next to its gate
+% symbol.
+\begin{frame}{От транзистора до ALU}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize,
       terminal/.style={font=\tiny}]
     \node[logic title, anchor=west] at (-1.0,0.55) {Транзисторът е ключ};
-    \node at (1.95,0) {вход 0};
-    \node at (2.95,0) {вход 1};
     \node[nmos] (n) at (0,-1.05) {};
-    \node[terminal, left] at (n.G) {вход};
-    \draw (n.D) to[short, -o] ++(0,0.12) node[terminal, right] {изход};
-    \draw (n.S) node[ground] {} node[terminal, right] {постоянно 0};
     \node[terminal, text=gray] at (-0.6,-1.5) {nMOS};
     \node[pmos, emptycircle] (p) at (0,-2.65) {};
-    \node[terminal, left] at (p.G) {вход};
-    \draw ($(p.S)+(-0.2,0)$) -- ($(p.S)+(0.2,0)$)
-      node[terminal, right] {постоянно 1};
-    \draw (p.D) to[short, -o] ++(0,-0.12) node[terminal, right] {изход};
     \node[terminal, text=gray] at (-0.6,-3.1) {pMOS};
+    \segpart{
+      \node[terminal, left] at (n.G) {вход};
+      \draw (n.D) to[short, -o] ++(0,0.12) node[terminal, right] {изход};
+      \draw (n.S) node[ground] {} node[terminal, right] {постоянно 0};
+      \node[terminal, left] at (p.G) {вход};
+      \draw ($(p.S)+(-0.2,0)$) -- ($(p.S)+(0.2,0)$)
+        node[terminal, right] {постоянно 1};
+      \draw (p.D) to[short, -o] ++(0,-0.12) node[terminal, right] {изход};}
+    \segpart{
+    \node at (1.95,0) {вход 0};
+    \node at (2.95,0) {вход 1};
     \foreach \y/\on in {-1.05/1, -2.65/0} {
       \foreach \in/\x in {0/1.95, 1/2.95} {
         \draw (\x,\y+0.55) -- (\x,\y+0.35) (\x,\y-0.35) -- (\x,\y-0.55);
@@ -1008,7 +1080,7 @@ sete    al         ; al = 0
         \fi
         \fill (\x,\y+0.35) circle (1pt) (\x,\y-0.35) circle (1pt);
       }
-    }
+    }}
   \end{circuitikz}%
   \hfill\seg
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
@@ -1055,7 +1127,7 @@ sete    al         ; al = 0
 % From gates to an adder: a half adder of XOR and AND, then a full adder of two
 % half adders and an OR. Drawn larger than the previous slide, as there are
 % fewer parts.
-\begin{frame}{Суматор от логически елементи}
+\begin{frame}{От транзистора до ALU}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\footnotesize,
       scale=1.08, circuitikz/bipoles/length=1.0cm]
@@ -1111,7 +1183,7 @@ sete    al         ; al = 0
 % operation code picks the result that comes out; the example is the code the
 % control unit would send for add rax, rbx. The codes 000-100 are made up -
 % every processor has its own.
-\begin{frame}{От суматора до ALU}
+\begin{frame}{От транзистора до ALU}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize,
       carry/.style={above, text=orange!90!black}]
@@ -1193,11 +1265,33 @@ sete    al         ; al = 0
   \end{center}
 \end{frame}
 
+\begin{frame}{Памет и устройства за съхранение}
+  \begin{center}
+    \small
+    \begin{tabular}{@{}llll@{}}
+      \toprule
+      & \textbf{Пази данните без ток} & \textbf{Типичен обем}
+        & \textbf{Време за достъп} \\
+      \midrule
+      \seg RAM & не & 8-64 GB & $\approx 100$ ns \\
+      \seg SSD & да & 0.25-4 TB & $\approx 0.1$ ms \\
+      \seg HDD & да & 1-30 TB & $\approx 10$ ms \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  \begin{itemize}
+    \item Дисковете са енергонезависими и много по-обемни, но SSD е около
+      1000 пъти по-бавен от RAM, а HDD - около 100\,000 пъти.
+    \item Ако достъпът до RAM траеше 1 секунда, четене от SSD би отнело около
+      17 минути, а от HDD - повече от ден.
+  \end{itemize}
+\end{frame}
+
 % Memory, after Crash Course Computer Science #6, with its English names. A
 % gate whose output feeds back into its input keeps its value: the AND-OR
 % latch. Two more AND gates in front of it make a gated latch, which takes the
 % value of data in only while write enable is on.
-\begin{frame}{Latch от логически елементи}
+\begin{frame}{От логическия елемент до RAM}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
     \node[logic title, anchor=west] at (-0.9,1.2) {AND-OR latch};
@@ -1253,7 +1347,7 @@ sete    al         ; al = 0
 % 16 row lines, 16 column lines and three shared ones - data, write enable and
 % read enable - instead of an input and an output for each and a write enable.
 % The address 1100 1000 selects row 12, column 8.
-\begin{frame}{От latch до матрица}
+\begin{frame}{От логическия елемент до RAM}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
     \node[logic title, anchor=west] at (-1.4,1.2) {8-битов регистър};
@@ -1316,7 +1410,7 @@ sete    al         ; al = 0
 % addresses - here 01000001, the letter A. Real RAM is built the same way, but
 % its cell is a transistor and a capacitor rather than a latch: denser, though
 % it forgets unless refreshed. Latch-like SRAM cells are kept for the caches.
-\begin{frame}{От матрицата до RAM}
+\begin{frame}{От логическия елемент до RAM}
   \begin{center}
   \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
     \node[logic title, anchor=west] at (-1.1,1.2) {256 байта};
@@ -1368,6 +1462,225 @@ sete    al         ; al = 0
   Random access: всеки адрес се чете и записва еднакво бързо, в произволен ред.
 \end{frame}
 
+% The processor of the first practice, after Crash Course Computer Science
+% #7: RAM with the program, four registers on the data bus, the instruction
+% register and the instruction address register inside the control unit, and
+% the ALU. It is built up a part at a time, as in the video.
+\begin{frame}{От ALU и RAM до процесора}
+  \begin{center}
+  \begin{tikzpicture}
+    \cpuram
+    \segpart{\cpuregisters}
+    \segpart{\cpuir}
+    \segpart{\cpucu}
+    \segpart{\cpualu}
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% The four instructions of the toy processor, and the program in its RAM
+% decoded a line at a time: opcode in blue, operand in orange. What each line
+% does is on the next slides.
+\begin{frame}{От ALU и RAM до процесора}
+  \begin{center}
+  \begin{tikzpicture}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-0.1,0.5) {Инструкции};
+    \node[anchor=north west] at (-0.1,0.2) {%
+      \begin{tabular}{@{}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{\hspace{0.6em}}l@{}}
+        \toprule
+        instruction & opcode & operand & действие \\
+        \midrule
+        \texttt{LOAD\_A} & \texttt{0010} & адрес & A = RAM[адрес] \\
+        \texttt{LOAD\_B} & \texttt{0001} & адрес & B = RAM[адрес] \\
+        \texttt{STORE\_A} & \texttt{0100} & адрес & RAM[адрес] = A \\
+        \texttt{ADD} & \texttt{1000} & регистри & втори = първи + втори \\
+        \bottomrule
+      \end{tabular}};
+    \node[anchor=north west, text=gray!80!black] at (-0.1,-2.3)
+      {Регистри: A = \texttt{00}, B = \texttt{01}, C = \texttt{10},
+       D = \texttt{11}};
+  \end{tikzpicture}%
+  \hfill\seg
+  \begin{tikzpicture}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-0.2,0.5) {Програмата в RAM};
+    \node[cpu label, anchor=east] at (0.3,0.05) {address};
+    \foreach \x/\h in {0.5/data, 2.05/instruction}
+      \node[cpu label, anchor=west] at (\x,0.05) {\h};
+    \draw[gray] (-0.45,-0.15) -- (4.0,-0.15);
+    \foreach \addr/\op/\arg/\ins [count=\k from 1] in
+        {0/0010/1110/LOAD\_A 14, 1/0001/1111/LOAD\_B 15, 2/1000/0100/ADD B{,} A,
+         3/0100/1101/STORE\_A 13} {
+      \segpart{
+        \node[anchor=east] at (0.3,-\k*0.45) {\addr};
+        \node[anchor=west, font=\scriptsize\ttfamily] at (0.5,-\k*0.45)
+          {\textcolor{tuesblue}{\op}\,\textcolor{orange!90!black}{\arg}};
+        \node[anchor=west, font=\scriptsize\ttfamily] at (2.05,-\k*0.45)
+          {\ins};}
+    }
+    \segpart{
+      \foreach \addr/\data/\val [count=\k from 6] in
+          {14/0000 0011/3, 15/0000 1110/14} {
+        \node[anchor=east] at (0.3,-\k*0.45) {\addr};
+        \node[anchor=west, font=\scriptsize\ttfamily] at (0.5,-\k*0.45)
+          {\data};
+        \node[anchor=west, text=gray!80!black] at (2.05,-\k*0.45)
+          {данни: \val};
+      }
+      \node[anchor=west, text=gray!80!black] at (-0.2,-5*0.45) {\dots};}
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% One turn of the control unit, for the instruction at address 0: fetch it
+% into the instruction register, decode its opcode, execute it - here, read
+% address 14 into register A - and move to the next address.
+\begin{frame}{Изпълнение на програмата}
+  \begin{center}
+  \begin{tikzpicture}[legend/.style={anchor=west, font=\tiny}]
+    \cpuram \cpuregisters \cpuir \cpucu \cpualu
+    \segpart{
+      \draw[very thick, tuesblue] (iar.east) -| (8.55,0.3) -- (10.75,0.3);
+      \node[cpu cell, minimum width=1.45cm, fill=tuesblue!25] at (ram0)
+        {0010 1110};
+      \draw[very thick, tuesblue] (10.75,2.0) -- (9.85,2.0) -- (9.85,3.3)
+        -- (9.5,3.3) -- (9.5,0.85) -- (ira.east);
+      \node[cpu cell, minimum width=0.9cm, fill=tuesblue!25] at (iro) {0010};
+      \node[cpu cell, minimum width=0.9cm, fill=tuesblue!25] at (ira) {1110};
+      \node[cpu step, fill=tuesblue] at (9.5,1.9) {1};
+      \node[legend] at (9.2,-1.15) {\textcolor{tuesblue}{\textbf{1 fetch:}}
+        IR = RAM[IAR] = \texttt{0010 1110}};}
+    \segpart{
+      \draw[->, >=stealth, thick, tuesnavy] (iro.west) -- ++(-0.45,0)
+        node[left, font=\tiny\ttfamily] (decoded) {LOAD\_A};
+      \node[cpu step, fill=tuesnavy, left] at (decoded.west) {2};
+      \node[legend] at (9.2,-1.45) {\textcolor{tuesnavy}{\textbf{2 decode:}}
+        \texttt{0010} = \texttt{LOAD\_A}};}
+    \segpart{
+      \draw[very thick, orange] (ira.south) |- (8.55,0.3) -- (10.75,0.3);
+      \node[cpu cell, minimum width=1.45cm, fill=orange!30] at (ram6)
+        {0000 0011};
+      \draw[very thick, orange] (8.9,-0.2) -- (10.75,-0.2);
+      \draw[very thick, orange] (10.75,2.0) -- (9.85,2.0) -- (9.85,3.3)
+        -- (3.35,3.3) -- (regA.north);
+      \node[cpu cell, minimum width=1.5cm, fill=orange!30] at (regA)
+        {\textsf{\textbf{A}}\; 0000 0011};
+      \node[cpu step, fill=orange] at (5.75,3.3) {3};
+      \node[legend] at (9.2,-1.75) {\textcolor{orange!90!black}{\textbf{3
+        execute:}} A = RAM[\texttt{1110}] = \texttt{0000 0011}};}
+    \segpart{
+      \node[cpu cell, minimum width=1.8cm, fill=gray!20] at (iar) {0000 0001};
+      \node[cpu step, fill=gray] at (5.75,-0.55) {4};
+      \node[legend] at (9.2,-2.05) {\textcolor{gray}{\textbf{4}} IAR = IAR + 1,
+        и отначало};}
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% The whole program, an instruction at a time: what the instruction address
+% register pointed at, what was fetched, and the registers and address 13 after
+% it ran. What changed is in blue.
+\begin{frame}{Изпълнение на програмата}
+  \begin{center}
+  \begin{tikzpicture}[font=\scriptsize, val/.style={font=\scriptsize\ttfamily},
+      new/.style={val, text=tuesblue}]
+    \foreach \x/\h in {0.65/IAR, 2.35/IR, 4.0/instruction, 5.85/A, 7.7/B,
+        9.55/RAM[13]}
+      \node[cpu label] at (\x,0) {\h};
+    \draw[gray] (-0.2,-0.2) -- (10.5,-0.2);
+    \node[val] at (0.65,-0.5) {0000 0000};
+    \node[text=gray!80!black] at (4.0,-0.5) {начало};
+    \foreach \x in {5.85, 7.7, 9.55} \node[val] at (\x,-0.5) {0000 0000};
+    \segpart{
+      \node[val] at (0.65,-0.95) {0000 0000};
+      \node[val] at (2.35,-0.95) {0010 1110};
+      \node[val] at (4.0,-0.95) {LOAD\_A 14};
+      \node[new] at (5.85,-0.95) {0000 0011};
+      \node[val] at (7.7,-0.95) {0000 0000};
+      \node[val] at (9.55,-0.95) {0000 0000};}
+    \segpart{
+      \node[val] at (0.65,-1.4) {0000 0001};
+      \node[val] at (2.35,-1.4) {0001 1111};
+      \node[val] at (4.0,-1.4) {LOAD\_B 15};
+      \node[val] at (5.85,-1.4) {0000 0011};
+      \node[new] at (7.7,-1.4) {0000 1110};
+      \node[val] at (9.55,-1.4) {0000 0000};}
+    \segpart{
+      \node[val] at (0.65,-1.85) {0000 0010};
+      \node[val] at (2.35,-1.85) {1000 0100};
+      \node[val] at (4.0,-1.85) {ADD B, A};
+      \node[new] at (5.85,-1.85) {0001 0001};
+      \node[val] at (7.7,-1.85) {0000 1110};
+      \node[val] at (9.55,-1.85) {0000 0000};
+      \node[anchor=north west, align=left, text=gray!80!black] at (-0.2,-3.0)
+        {\texttt{ADD}: CU подава B и A на ALU с opcode за събиране. Изходът,
+         3 + 14 = 17,\\отива в A, а флаговете O, Z и N са 0.};}
+    \segpart{
+      \node[val] at (0.65,-2.3) {0000 0011};
+      \node[val] at (2.35,-2.3) {0100 1101};
+      \node[val] at (4.0,-2.3) {STORE\_A 13};
+      \node[val] at (5.85,-2.3) {0001 0001};
+      \node[val] at (7.7,-2.3) {0000 1110};
+      \node[new] at (9.55,-2.3) {0001 0001};}
+    \segpart{
+      \node[val] at (0.65,-2.75) {0000 0100};
+      \node[val] at (2.35,-2.75) {0000 0000};
+      \node[text=orange!90!black] at (4.0,-2.75) {?};
+      \node[anchor=west, text=orange!90!black] at (4.95,-2.75)
+        {няма такава инструкция};
+      \node[anchor=north west, align=left] at (-0.2,-3.75)
+        {Програмата свършва на адрес 3, но процесорът не знае това -\\
+         продължава с каквото има на адрес 4.};}
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+% The same program in NASM for x86-64, from the first practice: register A is
+% rax, B is rbx, and addresses 13, 14 and 15 are the labels result, x and y.
+% The machine code is what objdump -d -M intel shows for it. Unlike the toy
+% processor, a real program has to ask the kernel to end it.
+\begin{frame}{Същата програма на x86-64}
+  \begin{center}
+  \begin{tikzpicture}[font=\scriptsize, code/.style={font=\scriptsize\ttfamily}]
+    \node[logic title, anchor=west] at (-0.1,0.5) {Схемата};
+    \node[logic title, anchor=west] at (3.4,0.5) {NASM};
+    \node[logic title, anchor=west] at (7.6,0.5) {Машинен код};
+    \foreach \toy [count=\k from 0] in
+        {LOAD\_A 14, LOAD\_B 15, ADD B{,} A, STORE\_A 13}
+      \node[code, anchor=west] at (-0.1,-\k*0.45) {\toy};
+    \segpart{
+      \foreach \asm [count=\k from 0] in
+          {mov rax{,} [x], mov rbx{,} [y], add rax{,} rbx,
+           mov [result]{,} rax} {
+        \draw[->, >=stealth, gray] (2.0,-\k*0.45) -- (3.2,-\k*0.45);
+        \node[code, anchor=west] at (3.4,-\k*0.45) {\asm};
+      }}
+    \segpart{
+      \foreach \bytes [count=\k from 0] in
+          {48 8b 05 01 10 00 00, 48 8b 1d 02 10 00 00, 48 01 d8,
+           48 89 05 e8 0f 00 00}
+        \node[code, anchor=west, text=gray!80!black] at (7.6,-\k*0.45)
+          {\bytes};
+      \node[anchor=north west, text=gray!80!black, align=left] at (7.6,-1.75)
+        {3 или 7 байта на инструкция\\вместо 1};}
+    \segpart{
+      \node[anchor=north west, align=left] at (-0.1,-1.75)
+        {A $\to$ \texttt{rax}, B $\to$ \texttt{rbx}\\
+         адреси 13, 14, 15 $\to$ \texttt{result}, \texttt{x}, \texttt{y}};}
+    \segpart{
+      \node[draw=orange, rounded corners=2pt, code, anchor=north west,
+        align=left, inner sep=4pt] (exit) at (3.3,-2.85)
+        {mov rdi, [result]\\mov rax, 60\\syscall};
+      \node[anchor=west, align=left] at ($(exit.east)+(0.2,0)$)
+        {Схемата спира дотук. Програмата\\
+         моли ядрото да я приключи\\
+         с изходен код 17.};
+      \node[fill=gray!12, rounded corners=2pt, code, anchor=north west,
+        align=left, inner sep=4pt] at (-0.1,-2.85)
+        {\$ ./02-toy-cpu\\\$ echo \$?\\17};}
+  \end{tikzpicture}
+  \end{center}
+\end{frame}
+
 \begin{frame}{Шина и входно-изходни устройства}
   \begin{itemize}
     \item \textbf{Шината} пренася данни между компонентите: по едни линии -
@@ -1379,28 +1692,6 @@ sete    al         ; al = 0
       \emph{контролер}: малък чип със собствени регистри и буфер.
     \item ОС говори с всеки контролер чрез \emph{драйвер} - програмен код,
       който знае как да работи с точно този вид устройство.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Памет и устройства за съхранение}
-  \begin{center}
-    \small
-    \begin{tabular}{@{}llll@{}}
-      \toprule
-      & \textbf{Пази данните без ток} & \textbf{Типичен обем}
-        & \textbf{Време за достъп} \\
-      \midrule
-      \seg RAM & не & 8-64 GB & $\approx 100$ ns \\
-      \seg SSD & да & 0.25-4 TB & $\approx 0.1$ ms \\
-      \seg HDD & да & 1-30 TB & $\approx 10$ ms \\
-      \bottomrule
-    \end{tabular}
-  \end{center}
-  \begin{itemize}
-    \item Дисковете са енергонезависими и много по-обемни, но SSD е около
-      1000 пъти по-бавен от RAM, а HDD - около 100\,000 пъти.
-    \item Ако достъпът до RAM траеше 1 секунда, четене от SSD би отнело около
-      17 минути, а от HDD - повече от ден.
   \end{itemize}
 \end{frame}
 
@@ -1435,6 +1726,9 @@ sete    al         ; al = 0
     \item \textcolor{tuesnavy}{Crash Course}. \emph{Registers and RAM}.
       {\color{bibnote}\url{https://youtu.be/fpnE6UAfbtU}. Computer Science
         \#6, video, YouTube}
+    \item \textcolor{tuesnavy}{Crash Course}. \emph{The Central Processing Unit
+      (CPU)}. {\color{bibnote}\url{https://youtu.be/FZGugFqdr60}. Computer
+        Science \#7, video, YouTube}
   \end{itemize}
 \end{frame}
 
