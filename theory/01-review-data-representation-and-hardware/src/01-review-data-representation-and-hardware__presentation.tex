@@ -12,6 +12,27 @@
 \definecolor{bibnote}{HTML}{627293}
 
 \usepackage{tikz}
+\usetikzlibrary{calc, decorations.pathreplacing}
+
+% Transistors and logic gates, drawn smaller than circuitikz draws them so that
+% a whole circuit fits beside the others on one slide.
+\usepackage[americanports]{circuitikz}
+\ctikzset{tripoles/mos style/no arrows, bipoles/length=0.85cm}
+\tikzset{
+  logic title/.style={font=\footnotesize\bfseries, text=tuesnavy},
+  logic block/.style={draw=tuesnavy, fill=tuesblue!12, rounded corners=2pt,
+    align=center, inner sep=2pt},
+}
+
+% A step of a segmented build inside a picture, where \seg cannot be used: an
+% unbraced step there leaves the pictures after it shown or hidden at the
+% wrong steps. Everything in the argument is one step; nothing changes in
+% other builds.
+\newcommand{\segpart}[1]{%
+  \ifsegmented
+    \ifnum\value{beamerpauses}=1 \setcounter{beamerpauses}{2}\fi
+    \uncover<+->{#1}%
+  \else #1\fi}
 
 % The 32 bits of an IEEE 754 float, coloured by field, with a value (or
 % nothing) in each cell: \floatbits{0,1,0,...}.
@@ -956,6 +977,397 @@ sete    al         ; al = 0
   \end{itemize}
 \end{frame}
 
+% From transistor to gate. A transistor is a switch between its output and a
+% constant voltage: nMOS closes on a 1 at its input, pMOS on a 0. CMOS NOT and
+% NAND are drawn with their transistors, each next to its gate symbol.
+\begin{frame}{Логическите елементи отвътре}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize,
+      terminal/.style={font=\tiny}]
+    \node[logic title, anchor=west] at (-1.0,0.55) {Транзисторът е ключ};
+    \node at (1.95,0) {вход 0};
+    \node at (2.95,0) {вход 1};
+    \node[nmos] (n) at (0,-1.05) {};
+    \node[terminal, left] at (n.G) {вход};
+    \draw (n.D) to[short, -o] ++(0,0.12) node[terminal, right] {изход};
+    \draw (n.S) node[ground] {} node[terminal, right] {постоянно 0};
+    \node[terminal, text=gray] at (-0.6,-1.5) {nMOS};
+    \node[pmos, emptycircle] (p) at (0,-2.65) {};
+    \node[terminal, left] at (p.G) {вход};
+    \draw ($(p.S)+(-0.2,0)$) -- ($(p.S)+(0.2,0)$)
+      node[terminal, right] {постоянно 1};
+    \draw (p.D) to[short, -o] ++(0,-0.12) node[terminal, right] {изход};
+    \node[terminal, text=gray] at (-0.6,-3.1) {pMOS};
+    \foreach \y/\on in {-1.05/1, -2.65/0} {
+      \foreach \in/\x in {0/1.95, 1/2.95} {
+        \draw (\x,\y+0.55) -- (\x,\y+0.35) (\x,\y-0.35) -- (\x,\y-0.55);
+        \ifnum\in=\on
+          \draw[very thick, tuesblue] (\x,\y-0.35) -- (\x,\y+0.35);
+        \else
+          \draw (\x,\y-0.35) -- (\x+0.25,\y+0.3);
+        \fi
+        \fill (\x,\y+0.35) circle (1pt) (\x,\y-0.35) circle (1pt);
+      }
+    }
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title] at (0.2,0.55) {НЕ (NOT)};
+    \draw (-0.5,0) -- (0.9,0) node[right] {1};
+    \draw (0,0) node[pmos, emptycircle, anchor=S] (p) {};
+    \draw (p.D) -- ++(0,-0.3) coordinate (q) -- ++(0,-0.3)
+      node[nmos, anchor=D] (n) {};
+    \draw (n.S) node[ground] {} node[right=2pt] {0};
+    \draw (q) to[short, *-o] ++(0.8,0) node[right] {Q};
+    \draw (p.G) -- ++(-0.25,0) coordinate (g) -- (g |- n.G) -- (n.G);
+    \draw (g |- q) to[short, *-o] ++(-0.45,0) node[left] {A};
+    \draw ($(n.S)+(0.15,-1.05)$) node[not port] (gate) {};
+    \draw (gate.in) -- ++(-0.2,0) node[left] {A};
+    \draw (gate.out) -- ++(0.2,0) node[right] {Q};
+    \node[text=gray] at ($(gate.in)+(-0.85,0)$) {=};
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title] at (0.65,0.55) {НЕ-И (NAND)};
+    \draw (-0.5,0) -- (1.8,0) node[right] {1};
+    \draw (0,0) node[pmos, emptycircle, anchor=S] (pa) {};
+    \draw (1.3,0) node[pmos, emptycircle, anchor=S] (pb) {};
+    \draw (pa.D) -- ++(0,-0.3) coordinate (q) -| (pb.D);
+    \draw (q) node[circ] {} -- ++(0,-0.3) node[nmos, anchor=D] (na) {};
+    \draw (na.S) node[nmos, anchor=D] (nb) {};
+    \draw (nb.S) node[ground] {} node[right=2pt] {0};
+    \draw (pb.D |- q) to[short, -o] ++(0.4,0) node[right] {Q};
+    \foreach \t/\in in {pa/A, pb/B, na/A, nb/B}
+      \draw (\t.G) -- ++(-0.15,0) node[left] {\in};
+    \draw ($(nb.S)+(2.4,0.3)$) node[nand port] (gate) {};
+    \draw (gate.in 1) -- ++(-0.2,0) node[left] {A};
+    \draw (gate.in 2) -- ++(-0.2,0) node[left] {B};
+    \draw (gate.out) -- ++(0.2,0) node[right] {Q};
+    \node[text=gray] at ($(gate.west)+(-0.85,0)$) {=};
+  \end{circuitikz}
+  \end{center}
+  \seg
+  \footnotesize
+  От NAND може да се построи всеки друг елемент. AND например е NAND и NOT
+  след него - 6 транзистора.
+\end{frame}
+
+% From gates to an adder: a half adder of XOR and AND, then a full adder of two
+% half adders and an OR. Drawn larger than the previous slide, as there are
+% fewer parts.
+\begin{frame}{Суматор от логически елементи}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\footnotesize,
+      scale=1.08, circuitikz/bipoles/length=1.0cm]
+    \node[logic title, anchor=west] at (-0.3,1.0) {Полусуматор (HA)};
+    \draw (2,0) node[xor port] (x) {};
+    \draw (2,-1.2) node[and port] (a) {};
+    \draw (x.in 1) -- ++(-1.4,0) coordinate (A) node[left] {A};
+    \draw (x.in 2) -- ++(-1.4,0) coordinate (B) node[left] {B};
+    \draw ($(A)+(0.35,0)$) node[circ] {} |- (a.in 1);
+    \draw ($(B)+(0.7,0)$) node[circ] {} |- (a.in 2);
+    \draw (x.out) -- ++(0.3,0) node[right] {S (сума)};
+    \draw (a.out) -- ++(0.3,0) node[right] {C (пренос)};
+    \node[anchor=north west] at (0.1,-1.85) {%
+      \begin{tabular}{@{}cc|cc@{}}
+        A & B & C & S \\ \hline
+        0 & 0 & 0 & 0 \\
+        0 & 1 & 0 & 1 \\
+        1 & 0 & 0 & 1 \\
+        \textcolor{tuesblue}{1} & \textcolor{tuesblue}{1}
+          & \textcolor{tuesblue}{1} & \textcolor{tuesblue}{0}
+      \end{tabular}};
+    \node[anchor=west, text=tuesblue] at (2.6,-3.5) {$1 + 1 = 10_{(2)}$};
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\footnotesize,
+      scale=1.08, circuitikz/bipoles/length=1.0cm]
+    \node[logic title, anchor=west] at (-0.3,1.0) {Пълен суматор (FA)};
+    \node[logic block, minimum width=0.8cm, minimum height=1.0cm]
+      (ha1) at (1.1,-0.9) {HA};
+    \node[logic block, minimum width=0.8cm, minimum height=1.0cm]
+      (ha2) at (2.7,-0.3) {HA};
+    \draw (4.5,-1.65) node[or port] (o) {};
+    \draw (ha1.west |- 0,-0.6) -- ++(-0.8,0) node[left] {A};
+    \draw (ha1.west |- 0,-1.2) -- ++(-0.8,0) node[left] {B};
+    \draw (ha2.west |- 0,0) -- ++(-2.4,0) node[left] {C\textsubscript{вх}};
+    \draw (ha1.east |- 0,-0.6) -- (ha2.west |- 0,-0.6);
+    \draw (ha2.east |- 0,0) -- (5.55,0) node[right] {S};
+    \draw (ha2.east |- 0,-0.6) -- ++(0.35,0) |- (o.in 1);
+    \draw (ha1.east |- 0,-1.2) -- ++(0.4,0) |- (o.in 2);
+    \draw (o.out) -- (o.out -| 5.55,0) node[right] {C\textsubscript{изх}};
+    \draw[dashed, gray, rounded corners=3pt] (0.15,0.4) rectangle (5.3,-2.45);
+    \node[anchor=south east, text=gray!80!black] at (5.3,-2.45) {FA};
+    \node[anchor=north west, text=gray!80!black, align=left, font=\scriptsize]
+      at (0.15,-2.55)
+      {Събира два бита и преноса от предишния\\разред - като събиране на ръка.};
+  \end{circuitikz}
+  \end{center}
+\end{frame}
+
+% From adders to the ALU. Four full adders chained by their carries add 6 + 3:
+% first A, then B, then the sum a bit at a time from the right, each bit with
+% the carry it passes on. The ALU computes every operation at once, and the
+% operation code picks the result that comes out; the example is the code the
+% control unit would send for add rax, rbx. The codes 000-100 are made up -
+% every processor has its own.
+\begin{frame}{От суматора до ALU}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize,
+      carry/.style={above, text=orange!90!black}]
+    \node[logic title, anchor=west] at (-0.95,1.5) {4-битов суматор};
+    \foreach \k in {0,...,3} {
+      \pgfmathsetmacro\x{\k * 1.5}
+      \node[logic block, minimum width=0.9cm, minimum height=0.8cm]
+        at (\x,0) {FA};
+      \draw (\x-0.2,0.4) -- ++(0,0.35) (\x+0.2,0.4) -- ++(0,0.35)
+        (\x,-0.4) -- ++(0,-0.35);
+      \draw[<-, >=stealth] (\x+0.45,0) -- (\x+1.05,0);
+    }
+    \draw[->, >=stealth] (-0.45,0) -- (-0.95,0);
+    \node[carry] at (5.25,0) {0};
+    \segpart{
+      \foreach \a [count=\k from 0] in {0,1,1,0}
+        \node[above, text=tuesblue] at (\k*1.5-0.2,0.75) {\a};
+      \node[anchor=west, text=tuesblue] at (-0.95,-1.45) {A = 0110 = 6};}
+    \segpart{
+      \foreach \b [count=\k from 0] in {0,0,1,1}
+        \node[above, text=violet] at (\k*1.5+0.2,0.75) {\b};
+      \node[anchor=west, text=violet] at (-0.95,-1.85) {B = 0011 = 3};}
+    \segpart{
+      \node[below] at (4.5,-0.75) {1};
+      \node[carry] at (3.75,0) {0};
+      \node[anchor=north west, text=orange!90!black, align=left]
+        at (2.0,-1.2) {преносът върви\\отдясно наляво};}
+    \segpart{
+      \node[below] at (3.0,-0.75) {0};
+      \node[carry] at (2.25,0) {1};}
+    \segpart{
+      \node[below] at (1.5,-0.75) {0};
+      \node[carry] at (0.75,0) {1};}
+    \segpart{
+      \node[below] at (0,-0.75) {1};
+      \node[carry] at (-0.7,0) {0};
+      \node[anchor=west] at (-0.95,-2.25) {S = 1001 = 9};
+      \node[anchor=north west, text=gray!80!black, align=left, font=\tiny]
+        at (-0.95,-2.6)
+        {Изваждане: $A - B = A + \overline{B} + 1$ - същият\\
+         суматор, с обърнати битове на B и входен пренос 1.};}
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize,
+      op/.style={logic block, minimum width=1.25cm, minimum height=0.36cm,
+        inner sep=1pt, font=\tiny}]
+    \node[logic title, anchor=west] at (-0.4,1.5) {ALU};
+    \node[left] at (0,1.15) {A, B};
+    \draw[very thick] (0,1.15) -- (0,-2.15);
+    \foreach \op/\code [count=\k from 0] in
+        {A + B/000, A $-$ B/001, A AND B/010, A OR B/011, A XOR B/100,
+         \dots/{}} {
+      \pgfmathsetmacro\y{0.6 - \k * 0.5}
+      \draw[thick] (0,\y) -- (0.25,\y);
+      \node[op] at (0.88,\y) {\op};
+      \draw (1.5,\y) -- (2.1,\y)
+        node[midway, above=-1pt, font=\tiny, text=gray!80!black] {\code};
+    }
+    \draw[fill=tuesblue!25, draw=tuesnavy] (2.1,0.8) -- (2.55,0.45)
+      -- (2.55,-1.95) -- (2.1,-2.3) -- cycle;
+    \node[rotate=90, font=\tiny] at (2.33,-0.75) {избор};
+    \node[logic block, minimum width=0.8cm, minimum height=0.5cm] (cu)
+      at (2.33,-2.95) {CU};
+    \draw (2.33,-2.13) -- (cu.north)
+      node[midway, right, font=\tiny] {код на операцията};
+    \draw[->, >=stealth, very thick] (2.55,-0.75) -- (3.8,-0.75)
+      node[right] {резултат};
+    \draw[->, >=stealth] (3.1,-0.75) |- (3.5,-1.6)
+      node[right, align=left] {флагове\\(rflags)};
+    \fill (3.1,-0.75) circle (1.5pt);
+    \segpart{
+      \node[op, fill=tuesblue!45, very thick] at (0.88,0.6) {A + B};
+      \draw[very thick, tuesblue] (1.5,0.6) -- (2.1,0.6);
+      \node[left, text=tuesblue, font=\tiny] at (2.33,-2.4) {000};
+      \node[anchor=east, align=right] (instr) at (1.6,-2.95)
+        {\texttt{add rax, rbx}\\{\color{gray!80!black}\texttt{48 01 D8}}};
+      \draw[->, >=stealth] (instr.east) -- (cu.west);}
+  \end{circuitikz}
+  \end{center}
+\end{frame}
+
+% Memory, after Crash Course Computer Science #6, with its English names. A
+% gate whose output feeds back into its input keeps its value: the AND-OR
+% latch. Two more AND gates in front of it make a gated latch, which takes the
+% value of data in only while write enable is on.
+\begin{frame}{Latch от логически елементи}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-0.9,1.2) {AND-OR latch};
+    \draw (1.4,0) node[or port] (or) {};
+    \draw (2.9,-0.45) node[and port] (and) {};
+    \draw (1.4,-1.1) node[not port] (not) {};
+    \draw (or.out) -| ($(and.in 1)+(-0.3,0)$) -- (and.in 1);
+    \draw (not.out) -| ($(and.in 2)+(-0.15,0)$) -- (and.in 2);
+    \draw (and.out) -- ++(0.9,0) node[right] {Q};
+    \draw ($(and.out)+(0.45,0)$) node[circ] {} |- (0.5,0.7) |- (or.in 1);
+    \draw (or.in 2) -- ++(-0.8,0) node[left] {set};
+    \draw (not.in) -- ++(-0.5,0) node[left] {reset};
+    \node[anchor=north west] at (-0.6,-1.6) {%
+      \begin{tabular}{@{}cc|c@{\quad}l@{}}
+        set & reset & Q & \\ \hline
+        1 & 0 & 1 & \color{gray!80!black} записва 1 \\
+        0 & 1 & 0 & \color{gray!80!black} записва 0 \\
+        0 & 0 & Q & \color{tuesblue} помни
+      \end{tabular}};
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-1.9,1.2) {Gated latch};
+    \draw (2.0,0) node[and port] (a1) {};
+    \draw (2.0,-1.2) node[and port] (a2) {};
+    \draw (a2.in 2) -- ++(-0.35,0) node[not port, anchor=out] (nd) {};
+    \draw (a1.in 1) -- ++(-1.9,0) coordinate (d) node[left] {data in};
+    \draw ($(d)+(0.3,0)$) node[circ] {} |- (nd.in);
+    \draw (a1.in 2) -- ++(-0.2,0) coordinate (we) -- (we |- a2.in 1)
+      -- (a2.in 1);
+    \draw (d |- 0,-0.6) node[left] {write enable} -- (we |- 0,-0.6)
+      node[circ] {};
+    \node[logic block, minimum width=1.0cm, minimum height=1.75cm,
+      font=\tiny] (latch) at (3.45,-0.6) {AND-OR\\latch};
+    \draw (a1.out) -- (a1.out -| latch.west) node[right, font=\tiny] {set};
+    \draw (a2.out) -- (a2.out -| latch.west) node[right, font=\tiny] {reset};
+    \draw (latch.east) -- ++(0.45,0) node[right] {data out};
+    \draw[dashed, gray, rounded corners=3pt] (-0.15,0.45) rectangle (4.2,-1.95);
+    \node[anchor=south east, text=gray!80!black] at (4.2,-1.95) {gated latch};
+    \node[anchor=north west, align=left, text=gray!80!black] at (-0.15,-2.1)
+      {write enable = 0: изходът не се променя\\
+       write enable = 1: data out = data in};
+  \end{circuitikz}
+  \end{center}
+  \seg
+  \footnotesize
+  Изходът се връща обратно във входа на OR - затова схемата помни един бит,
+  докато има ток.
+\end{frame}
+
+% Latches in a row are a register; in a grid they are memory. The latch at a
+% row and a column is chosen when both its lines are on, so 256 latches need
+% 16 row lines, 16 column lines and three shared ones - data, write enable and
+% read enable - instead of an input and an output for each and a write enable.
+% The address 1100 1000 selects row 12, column 8.
+\begin{frame}{От latch до матрица}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-1.4,1.2) {8-битов регистър};
+    \draw (-0.5,0) node[left, align=right] {write\\enable} -- (3.85,0);
+    \foreach \bit [count=\k from 0] in {0,1,0,0,0,0,0,1} {
+      \pgfmathsetmacro\x{\k * 0.55}
+      \node[logic block, minimum width=0.4cm, minimum height=0.6cm]
+        at (\x,0) {};
+      \draw (\x,0.3) -- ++(0,0.3) node[above, text=tuesblue] {\bit};
+      \draw (\x,-0.3) -- ++(0,-0.3) node[below] {\bit};
+    }
+    \node[left] at (-0.25,0.75) {data in};
+    \node[left] at (-0.25,-0.75) {data out};
+    \node[anchor=north west, text=gray!80!black, align=left] at (-1.4,-1.3)
+      {Всеки latch пази един бит,\\
+       а write enable е общ за всички.\\[0.4em]
+       Регистрите на x86-64 са по 64 бита.};
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-1.2,1.2) {Матрица 16 × 16 = 256 бита};
+    \foreach \i in {0,...,15}
+      \foreach \j in {0,...,15}
+        \fill[tuesblue!15] (\j*0.17,-\i*0.17) rectangle ++(0.13,-0.13);
+    \foreach \j in {0,...,15}
+      \fill[tuesblue!40] (\j*0.17,-12*0.17) rectangle ++(0.13,-0.13);
+    \foreach \i in {0,...,15}
+      \fill[tuesblue!40] (8*0.17,-\i*0.17) rectangle ++(0.13,-0.13);
+    \fill[tuesnavy] (8*0.17,-12*0.17) rectangle ++(0.13,-0.13);
+    \node[logic block, minimum width=0.3cm, minimum height=2.7cm,
+      inner sep=0pt] (rows) at (-0.3,-1.34) {};
+    \node[rotate=90, font=\tiny] at (rows) {ред};
+    \node[logic block, minimum width=2.7cm, minimum height=0.3cm,
+      inner sep=0pt] (cols) at (1.34,0.3) {};
+    \node[font=\tiny] at (cols) {колона};
+    \draw (rows.west |- 0,-1.34) -- ++(-0.15,0) node[left, text=tuesblue]
+      {\texttt{1100}};
+    \draw (cols.north) -- ++(0,0.2) node[above, text=tuesblue]
+      {\texttt{1000}};
+    \draw[gray] (1.5,-2.04) -- (3.0,-0.45);
+    \draw[gray] (1.5,-2.17) -- (3.0,-2.35);
+    \draw[gray, rounded corners=3pt] (3.0,-0.3) rectangle (6.2,-2.5);
+    \draw (4.4,-1.75) node[and port] (sel) {};
+    \draw (sel.in 1) -- ++(-0.2,0) node[left, font=\tiny] {ред};
+    \draw (sel.in 2) -- ++(-0.2,0) node[left, font=\tiny] {колона};
+    \node[logic block, minimum width=0.8cm, minimum height=0.55cm,
+      font=\tiny] (cell) at (5.35,-1.75) {latch};
+    \draw (sel.out) -- (cell.west);
+    \draw (cell.north) -- ++(0,0.2) node[above, font=\tiny, text=gray!80!black,
+      align=center, inner sep=1pt] {data,\\write enable,\\read enable};
+    \node[anchor=north west, align=left] at (-1.2,-2.85)
+      {Адрес \texttt{1100 1000}: ред 12, колона 8.\\
+       {\color{gray!80!black} 16 + 16 + 3 = 35 проводника}\\
+       {\color{gray!80!black} вместо 2 $\cdot$ 256 + 1 = 513}};
+  \end{circuitikz}
+  \end{center}
+\end{frame}
+
+% Eight 256-bit matrices behind one address store a byte at each of 256
+% addresses - here 01000001, the letter A. Real RAM is built the same way, but
+% its cell is a transistor and a capacitor rather than a latch: denser, though
+% it forgets unless refreshed. Latch-like SRAM cells are kept for the caches.
+\begin{frame}{От матрицата до RAM}
+  \begin{center}
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-1.1,1.2) {256 байта};
+    \draw[very thick] (-0.6,0.75) node[left] {адрес} -- (4.85,0.75);
+    \foreach \bit [count=\k from 0] in {0,1,0,0,0,0,0,1} {
+      \pgfmathsetmacro\x{\k * 0.65}
+      \draw (\x,0.75) -- (\x,0.45);
+      \fill (\x,0.75) circle (1.2pt);
+      \foreach \i in {0,...,3}
+        \foreach \j in {0,...,3}
+          \fill[tuesblue!30] (\x-0.27+\j*0.14,0.43-\i*0.14)
+            rectangle ++(0.11,-0.11);
+      \draw (\x,-0.15) -- ++(0,-0.3) node[below] {\bit};
+    }
+    \draw[decorate, decoration={brace, mirror, amplitude=4pt}]
+      (-0.3,-0.95) -- (4.85,-0.95)
+      node[midway, below=5pt] {1 байт: \texttt{01000001} = A};
+    \node[anchor=north west, align=left] at (-1.1,-1.75)
+      {8 матрици с общ 8-битов адрес:\\
+       256 адреса $\times$ 1 байт = 256 байта.\\[0.4em]
+       {\color{gray!80!black} С 32-битов адрес - $2^{32}$ B = 4 GB.}};
+  \end{circuitikz}%
+  \hfill\seg
+  \begin{circuitikz}[baseline=(current bounding box.north), font=\scriptsize]
+    \node[logic title, anchor=west] at (-0.4,1.2) {Клетката в паметта};
+    \node[font=\footnotesize\bfseries] at (0.75,0.75) {SRAM};
+    \draw (0.75,0.1) node[not port] (i1) {};
+    \draw (0.75,-0.7) node[not port, xscale=-1] (i2) {};
+    \draw (i1.out) -- ++(0.2,0) |- (i2.in);
+    \draw (i2.out) -- ++(-0.2,0) |- (i1.in);
+    \node[anchor=north, align=center] at (0.75,-1.6)
+      {latch от 6\\транзистора\\[0.3em]
+       {\color{gray!80!black} бърза,}\\{\color{gray!80!black} но голяма}\\
+       {\color{tuesblue} кеш}};
+    \node[font=\footnotesize\bfseries] at (3.8,0.75) {DRAM};
+    \draw (2.95,0.55) node[left, font=\tiny] {колона} -- (2.95,-1.35);
+    \node[nmos] (t) at (3.7,-0.1) {};
+    \draw (t.D) |- (2.95,0.45) node[circ] {};
+    \draw (t.G) -- (2.6,0 |- t.G) node[left, font=\tiny] {ред};
+    \draw (t.S) to[C] ++(0,-0.6) node[ground] {};
+    \node[anchor=north, align=center] at (3.7,-1.6)
+      {1 транзистор и\\1 кондензатор\\[0.3em]
+       {\color{gray!80!black} плътна, но}\\{\color{gray!80!black} се опреснява}\\
+       {\color{tuesblue} RAM}};
+  \end{circuitikz}
+  \end{center}
+  \seg
+  \footnotesize
+  Random access: всеки адрес се чете и записва еднакво бързо, в произволен ред.
+\end{frame}
+
 \begin{frame}{Шина и входно-изходни устройства}
   \begin{itemize}
     \item \textbf{Шината} пренася данни между компонентите: по едни линии -
@@ -1014,6 +1426,15 @@ sete    al         ; al = 0
       {\color{bibnote}\url{https://youtu.be/thrx3SBEpL8}. Video, YouTube}
     \item \textcolor{tuesnavy}{Computerphile}. \emph{Floating Point Numbers}.
       {\color{bibnote}\url{https://youtu.be/PZRI1IfStY0}. Video, YouTube}
+    \item \textcolor{tuesnavy}{Crash Course}. \emph{Boolean Logic \& Logic Gates}.
+      {\color{bibnote}\url{https://youtu.be/gI-qXk7XojA}. Computer Science
+        \#3, video, YouTube}
+    \item \textcolor{tuesnavy}{Crash Course}. \emph{How Computers Calculate -
+      the ALU}. {\color{bibnote}\url{https://youtu.be/1I5ZMmrOfnA}. Computer
+        Science \#5, video, YouTube}
+    \item \textcolor{tuesnavy}{Crash Course}. \emph{Registers and RAM}.
+      {\color{bibnote}\url{https://youtu.be/fpnE6UAfbtU}. Computer Science
+        \#6, video, YouTube}
   \end{itemize}
 \end{frame}
 
