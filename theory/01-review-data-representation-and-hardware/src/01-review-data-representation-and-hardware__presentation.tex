@@ -794,8 +794,8 @@ sete    al         ; al = 0
       управлява останалите компоненти.
     \item \textbf{Оперативната памет (RAM)} пази инструкциите и данните на
       програмите, които се изпълняват в момента - и двете в една и съща памет.
-    \item Всеки байт в паметта има \emph{адрес} - помните ли $a$, $a+1$, $a+2$
-      от слайда за endianness?
+    \item Всеки байт в паметта има \emph{адрес}. Такива са $a$, $a+1$, $a+2$
+      от слайда за endianness.
     \item RAM е енергозависима - при изключване съдържанието ѝ се губи.
   \end{itemize}
 \end{frame}
@@ -815,7 +815,7 @@ sete    al         ; al = 0
       \node[anchor=north west, font=\scriptsize, text=gray!80!black]
         at (0.35,4.5) {Ядро};
       \node[unit, minimum width=2.8cm] (cu) at (1.95,3.35)
-        {Извличане и\\декодиране};
+        {Управляващо\\устройство (CU)};
       \node[unit, minimum width=1.4cm] (alu) at (4.35,3.35) {ALU};
       \node[unit, minimum width=2cm] (reg) at (6.45,3.35) {Регистри};
       \node[cache, minimum width=2.8cm] (l1i) at (1.95,2.05)
@@ -843,7 +843,7 @@ sete    al         ; al = 0
 
 \begin{frame}{Части на процесора}
   \begin{itemize}
-    \item \textbf{Управляващото устройство} извлича следващата инструкция,
+    \item \textbf{Управляващото устройство (CU)} извлича следващата инструкция,
       декодира я и казва на останалите части какво да правят.
     \item \textbf{Аритметико-логическото устройство (ALU)} смята: събиране,
       изваждане, сравнение, AND, OR, XOR, NOT. Изградено е от логически
@@ -852,6 +852,73 @@ sete    al         ; al = 0
       самия процесор, по 64 бита на x86-64.
     \item \textbf{Кешът} пази копие на последно използваните данни от RAM, за
       да не се чака паметта всеки път.
+  \end{itemize}
+\end{frame}
+
+% Access time and size of each level as two bar charts on log scales, one row
+% per level. A size is a range of typical values, so its bar is solid up to the
+% smaller one and pale up to the larger. RAM is in grey, for comparison. Where
+% each level sits is in the notes under the charts.
+\colorlet{level-bar}{tuesblue}
+\colorlet{level-pale}{tuesblue!35}
+\colorlet{ram-bar}{black!50}
+\colorlet{ram-pale}{black!20}
+\begin{frame}{Скорост и обем по нива}
+  \begin{center}
+  \begin{tikzpicture}[baseline=0pt, font=\scriptsize]
+    \node[anchor=south west, font=\footnotesize\bfseries, text=tuesnavy]
+      at (1.6,0.3) {Време за достъп};
+    \foreach \ns in {0.1, 1, 10, 100} {
+      \pgfmathsetmacro\x{1.7 + (log10(\ns) + 1) * 1.0}
+      \draw[black!15] (\x,0.3) -- (\x,-2.35);
+      \node[below, text=black!60] at (\x,-2.35) {\ns\,ns};
+    }
+    \foreach \level/\ns/\lbl/\kind [count=\i from 0] in {
+        Регистри/0.3/{$< 0.3$ ns}/level,
+        L1/1/{$\approx 1$ ns}/level,
+        L2/3/{$\approx 3$ ns}/level,
+        L3/10/{$\approx 10$ ns}/level,
+        RAM/100/{$\approx 100$ ns}/ram} {
+      \pgfmathsetmacro\y{-\i * 0.5}
+      \pgfmathsetmacro\x{1.7 + (log10(\ns) + 1) * 1.0}
+      \node[anchor=east] at (1.6,\y) {\level};
+      \fill[\kind-bar] (1.7,\y-0.17) rectangle (\x,\y+0.17);
+      \node[anchor=west, fill=white] at (\x,\y) {\lbl};
+    }
+  \end{tikzpicture}%
+  \hspace{0.6cm}%
+  \seg
+  \begin{tikzpicture}[baseline=0pt, font=\scriptsize]
+    \node[anchor=south west, font=\footnotesize\bfseries, text=tuesnavy]
+      at (-0.1,0.3) {Обем};
+    \foreach \e/\unit in {10/KB, 20/MB, 30/GB} {
+      \pgfmathsetmacro\x{(\e - 6) * 0.15}
+      \draw[black!15] (\x,0.3) -- (\x,-2.35);
+      \node[below, text=black!60] at (\x,-2.35) {1\,\unit};
+    }
+    % Sizes as powers of two: 2^15 B = 32 KB, 2^21.58 B = 3 MB, and so on.
+    \foreach \lo/\hi/\lbl/\kind [count=\i from 0] in {
+        7/9.5/{стотици байта}/level,
+        15/16/{32-64 KB}/level,
+        19/21.58/{0.5-3 MB}/level,
+        23/26/{8-64 MB}/level,
+        33/36/{8-64 GB}/ram} {
+      \pgfmathsetmacro\y{-\i * 0.5}
+      \pgfmathsetmacro\xlo{(\lo - 6) * 0.15}
+      \pgfmathsetmacro\xhi{(\hi - 6) * 0.15}
+      \fill[\kind-pale] (0,\y-0.17) rectangle (\xhi,\y+0.17);
+      \fill[\kind-bar] (0,\y-0.17) rectangle (\xlo,\y+0.17);
+      \node[anchor=west, fill=white] at (\xhi,\y) {\lbl};
+    }
+  \end{tikzpicture}\\
+  {\scriptsize\color{black!60} Двете скали са логаритмични.}
+  \end{center}
+  \footnotesize
+  \begin{itemize}
+    \item Регистрите, L1 и L2 са във всяко ядро, L3 е общ за ядрата, а RAM е
+      извън процесора.
+    \item Колкото по-далеч от ALU, толкова по-голям и по-бавен. L1 е разделен
+      на две - за инструкции (L1I) и за данни (L1D).
   \end{itemize}
 \end{frame}
 
@@ -886,28 +953,6 @@ sete    al         ; al = 0
         \texttt{cs}.}
     \item Програмата ги променя само косвено - с преходи и сравнения, а
       прекъсванията и режима - само ядрото.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Кеш памет}
-  \begin{center}
-    \small
-    \begin{tabular}{@{}lllr@{}}
-      \toprule
-      & \textbf{Типичен обем} & \textbf{Къде е} & \textbf{Време за достъп} \\
-      \midrule
-      \seg Регистри & стотици байта & в ядрото & $< 0.3$ ns \\
-      \seg L1 & 32-64 KB & на ядро & $\approx 1$ ns \\
-      \seg L2 & 0.5-3 MB & на ядро & $\approx 3$ ns \\
-      \seg L3 & 8-64 MB & общ за ядрата & $\approx 10$ ns \\
-      \seg RAM & 8-64 GB & извън процесора & $\approx 100$ ns \\
-      \bottomrule
-    \end{tabular}
-  \end{center}
-  \begin{itemize}
-    \item Колкото по-далеч от ALU, толкова по-голям и по-бавен: L1 < L2 < L3
-      по обем, L1 > L2 > L3 по скорост.
-    \item L1 е разделен на две - за инструкции (L1I) и за данни (L1D).
   \end{itemize}
 \end{frame}
 
@@ -962,7 +1007,7 @@ sete    al         ; al = 0
   \end{itemize}
 \end{frame}
 
-\begin{frame}{За четене вкъщи}
+\begin{frame}{За вкъщи}
   \footnotesize
   \begin{itemize}[<1->]
     \item \textcolor{tuesnavy}{Computerphile}. \emph{Why Use Binary?}
